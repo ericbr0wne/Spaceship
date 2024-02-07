@@ -482,3 +482,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# JetBrains Rider
+*.sln.iml
+*./idea
