@@ -9,12 +9,12 @@ namespace Spaceship;
 
 public class Server
 {
+    bool listen = true;
+
     public void ConsoleCancel()
     {
 
-        bool listen = true;
 
-        /// Handle ctrl + c interup event, and gracefully shut down server
         Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 
         {
@@ -29,10 +29,11 @@ public class Server
     public void Listener()
     {
         int port = 3000;
-        bool listen = true;
-
+        listen = true;
         HttpListener listener = new();
-        listener.Prefixes.Add($"<host>:{port}/"); // <host> kan t.ex. vara 127.0.0.1, 0.0.0.0, ...
+        listener.Prefixes.Add($"http://localhost:{port}/");
+
+        Console.WriteLine("Server is listening");
 
         try
         {
@@ -53,6 +54,9 @@ public class Server
                 HttpListenerContext context = listener.EndGetContext(result);
 
                 // metod eller kod här som hanterar request och response från context
+                Router router = new();
+                router.Navigation(context);
+
 
                 listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
             }
