@@ -16,11 +16,14 @@ public class Server
 
         /// Handle ctrl + c interup event, and gracefully shut down server
         Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
+
         {
             Console.WriteLine("Interupting cancel event");
             e.Cancel = true;
             listen = false;
         };
+
+
     }
 
     public void Listener()
@@ -56,5 +59,6 @@ public class Server
         }
 
     }
+
 
 }
