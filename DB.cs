@@ -15,9 +15,7 @@ public class DB
     public async void Connection()
     {
 
-        string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=spaceship";
 
-        await using var db = NpgsqlDataSource.Create(dbUri);
 
     }
     
