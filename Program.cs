@@ -1,6 +1,7 @@
 ﻿using Npgsql;
 using Spaceship;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Net;
 using System.Text;
 
@@ -50,31 +51,27 @@ void HandleRequest(IAsyncResult result)
         Router(context);
         HttpListenerRequest request = context.Request;
 
-        listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
         HttpListenerResponse response = context.Response;
-        response.StatusCode = (int)HttpStatusCode.OK;
-        response.ContentType = "text/plain";
 
         Console.WriteLine($"{request.HttpMethod} request received");
-        //string path = request.Url?.AbsolutePath ?? "/";
-
         listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
+
     }
 }
 
 
 void Router(HttpListenerContext context)
 {
-   // string message = ""; //fill with responde messages to Client
-    
+    // string message = ""; //fill with responde messages to Client
+
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
-    switch (request.HttpMethod, request.Url?.AbsolutePath)
+    switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
         case ("GET", "/"):
             RootGet(response);
             break;
-        case ("POST", "/user"):
+        case ("POST", "/post/user"):
             // first check then post what u wanted
             RootPost(request, response);
             break;
@@ -91,7 +88,7 @@ void Router(HttpListenerContext context)
 
 void RootGet(HttpListenerResponse response)
 {
-   string message = ""; //fill with responde messages to Client
+    string message = ""; //fill with responde messages to Client
     //string responseString = "";
     const string getUsers = "select * from users";
     var cmd = db.CreateCommand(getUsers);
@@ -108,7 +105,7 @@ void RootGet(HttpListenerResponse response)
         message += reader.GetInt32(2) + ", "; // hp
 
     }
-   //await Console.Out.WriteLineAsync(responseString);
+    //await Console.Out.WriteLineAsync(responseString);
     byte[] buffer = Encoding.UTF8.GetBytes(message);
     response.OutputStream.Write(buffer, 0, buffer.Length);
     response.OutputStream.Close();
@@ -117,9 +114,24 @@ void RootGet(HttpListenerResponse response)
 void RootPost(HttpListenerRequest req, HttpListenerResponse res)
 {
     StreamReader reader = new(req.InputStream, req.ContentEncoding);
-    string body = reader.ReadToEnd();
+    var cmd = db.CreateCommand("insert into users (name) values ($1) RETURNING id");
+    //curl -d "user=eric" -X POST http://localhost:3000/post/user
+    string postBody = reader.ReadToEnd();
+    Console.WriteLine(postBody);
 
-    Console.WriteLine($"Created the following in db: {body}");
+    string[] split = postBody.Split("=");
+
+    string column = split[1];
+
+    if (split[0] == "name")
+    {
+        cmd.Parameters.AddWithValue(column);
+    }
+
+    cmd.ExecuteNonQuery();
+
+
+    Console.WriteLine($"Created the following in db: {postBody}");
 
     res.StatusCode = (int)HttpStatusCode.Created;
     res.Close();
