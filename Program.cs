@@ -7,8 +7,8 @@ using System.Text;
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=spaceship";
 await using var db = NpgsqlDataSource.Create(dbUri);
-
 bool listen = true;
+
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
     Console.WriteLine("Server gracefully shutdown..");
@@ -38,9 +38,7 @@ void HandleRequest(IAsyncResult result)
     {
         HttpListenerContext context = listener.EndGetContext(result);
         Router(context);
-
         listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
-
     }
 }
 
@@ -49,7 +47,6 @@ void Router(HttpListenerContext context)
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
-
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
         case ("GET", "/users"):
@@ -66,24 +63,19 @@ void Router(HttpListenerContext context)
 
 void RootGet(HttpListenerResponse response)
 {
-
+    // curl -X GET http://localhost:3000/users
     string message = ""; 
     const string getUsers = "select * from users";
     var cmd = db.CreateCommand(getUsers);
     var reader = cmd.ExecuteReader();
-
     response.ContentType = "text/plain";
     response.StatusCode = (int)HttpStatusCode.OK;
-
-
     while (reader.Read())
     {
         message += reader.GetInt32(0) + ", "; // user id
         message += reader.GetString(1) + ", "; // name
         message += reader.GetInt32(2) + ", "; // hp
-
     }
-
     byte[] buffer = Encoding.UTF8.GetBytes(message);
     response.OutputStream.Write(buffer, 0, buffer.Length);
     response.OutputStream.Close();
@@ -91,28 +83,19 @@ void RootGet(HttpListenerResponse response)
 
 void RootPost(HttpListenerRequest req, HttpListenerResponse res)
 {
-    //curl -d "user=eric" -X POST http://localhost:3000/post/user
-
+    // curl -d "user=eric" -X POST http://localhost:3000/post/user
     StreamReader reader = new(req.InputStream, req.ContentEncoding);
     var cmd = db.CreateCommand("insert into users (name) values ($1) RETURNING id");
-    
     string postBody = reader.ReadToEnd();
     Console.WriteLine(postBody);
-
     string[] split = postBody.Split("=");
-
     string column = split[1];
-
     if (split[0] == "name")
     {
         cmd.Parameters.AddWithValue(column);
     }
-
     cmd.ExecuteNonQuery();
-
-
     Console.WriteLine($"Created the following in db: {postBody}");
-
     res.StatusCode = (int)HttpStatusCode.Created;
     res.Close();
 }
