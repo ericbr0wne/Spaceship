@@ -12,7 +12,7 @@ namespace Spaceship;
 public class DB
 {
 
-    public async void Connection()
+    public void Connection()
     {
 
 
