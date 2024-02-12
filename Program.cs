@@ -105,11 +105,34 @@ void RootPost(HttpListenerRequest req, HttpListenerResponse res)
     }
     cmd.ExecuteNonQuery();
     Console.WriteLine($"Created the following in db: {postBody}");
+   
+    Result(postBody, res);
     res.StatusCode = (int)HttpStatusCode.Created;
     res.Close();
 }
 
+void Result(string postBody, HttpListenerResponse res)
+{
+    // used to get result randomly until Damage  method be ready
+    bool isHit = new Random().Next(0, 2) == 0;
 
+    if (isHit)
+    {
+        Console.WriteLine("User hit the target!");
+    }
+    else
+    {
+        Console.WriteLine("User missed the target!");
+    }
+
+    string responseMessage = isHit ? "\nHit! Damage applied." : "\nMissed! Life decreased.";
+    byte[] buffer = Encoding.UTF8.GetBytes(responseMessage);
+
+    res.ContentType = "text/plain";
+    res.StatusCode = (int)HttpStatusCode.OK;
+    res.OutputStream.Write(buffer, 0, buffer.Length);
+    res.OutputStream.Close();
+}
 
 void NotFound(HttpListenerResponse res)
 {
