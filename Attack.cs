@@ -47,45 +47,52 @@ public class Attack
 
             //var getMapIdCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLetter}' AND horizontal = {posNumber};");
 
-            var attackId = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '$1' AND horizontal = $2;"); //KOLLA POSITION ID
-            attackId.Parameters.AddWithValue(posLetter);
-            attackId.Parameters.AddWithValue(posNumber);
+            var attackId = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLetter}' AND horizontal = {posNumber};"); //KOLLA POSITION ID
             object? attack = attackId.ExecuteScalar();
-            int AttackPosition = int.Parse(attack.ToString()); //HUR BLIR DENNA INTE NULL?!?!?!?!??!?!
+            if (attack != null && int.TryParse(attack.ToString(), out int AttackPosition))
+            {
+                Console.WriteLine($"{attacker} is attacking on square: {posLetter} {posNumber} !");
 
-            Console.WriteLine($"{attacker} is attacking on square: {AttackPosition} in x table");
-                var defenderPositionCommand = _db.CreateCommand($"SELECT mapid FROM users_x_position where userid = $1;");
-                defenderPositionCommand.Parameters.AddWithValue(defenderId);
-                int defenderPosition = Convert.ToInt32(defenderPositionCommand.ExecuteScalar());
-                defenderPositionCommand.ExecuteNonQuery();
-                if (defenderPosition == AttackPosition)
+                var defenderPositionCommand = _db.CreateCommand($"SELECT mapID FROM users_x_position WHERE userID = '{defender}';");
+                int defencePosition = Convert.ToInt32(defenderPositionCommand.ExecuteScalar());
+
+
+
+                if (defencePosition == AttackPosition)
                 {
-                    var hitRemoveHpCommand = _db.CreateCommand($"UPDATE users SET hp = hp - 1 WHERE id = $1;");
-                    hitRemoveHpCommand.Parameters.AddWithValue(defenderId);
+                    var hitRemoveHpCommand = _db.CreateCommand($"UPDATE users SET hp = hp - 1 WHERE id = '{defender}';");
                     hitRemoveHpCommand.ExecuteNonQuery();
 
-                    var newDefenderHp = _db.CreateCommand($"SELECT hp FROM users WHERE id = $1;");
-                    int defenderHp = Convert.ToInt32(newDefenderHp.ExecuteScalar());
-                    newDefenderHp.Parameters.AddWithValue(defenderId);
-
-                    newDefenderHp.ExecuteNonQuery();
-                    if (defenderHp == 0)
+                    var newDefenderHp = _db.CreateCommand($"SELECT hp FROM users WHERE id = '{defender}';");
+                    object? defenderHpObject = newDefenderHp.ExecuteScalar();
+                    if (defenderHpObject != null && int.TryParse(defenderHpObject.ToString(), out int defenderHp))
                     {
-                        Console.WriteLine("KABOOOOM! You destroyed the enemy");
+                        if (defenderHp == 0)
+                        {
+                            Console.WriteLine("KABOOOOM! You destroyed the enemy");
+                        }
+                        else
+                        {
+                            Console.WriteLine("You hit the enemy and damaged his ship with 1 dmg.");
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("You hit the enemy and damaged his ship with 1 dmg.");
+                        Console.WriteLine("Could not parse defender HP.");
                     }
                 }
-                else if (defenderPosition != AttackPosition)
+                else if (defencePosition != AttackPosition)
                 {
 
                     Console.WriteLine($"You missed the target!");
 
                 }
-            
-            
+            }
+            else
+            {
+
+            }
+
         }
         else
         {
