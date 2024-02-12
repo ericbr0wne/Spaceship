@@ -2,8 +2,12 @@
 using Spaceship;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using System.Net;
+using System.Net.WebSockets;
 using System.Text;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=spaceship";
 await using var db = NpgsqlDataSource.Create(dbUri);
@@ -18,7 +22,7 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 
 int port = 3000;
 HttpListener listener = new();
-listener.Prefixes.Add($"http://localhost:{port}/"); 
+listener.Prefixes.Add($"http://localhost:{port}/");
 
 try
 {
@@ -46,6 +50,7 @@ void HandleRequest(IAsyncResult result)
 
 void Router(HttpListenerContext context)
 {
+    User user = new(db);
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
@@ -55,8 +60,13 @@ void Router(HttpListenerContext context)
         case ("GET", "/users"):
             RootGet(response);
             break;
+
+
         case ("POST", "/post/user"):
             RootPost(request, response);
+            break;
+        case ("POST", "/post/position"):
+            user.PositionPost(request, response);
             break;
         default:
             NotFound(response);
@@ -67,7 +77,7 @@ void Router(HttpListenerContext context)
 void RootGet(HttpListenerResponse response)
 {
 
-    string message = ""; 
+    string message = "";
     const string getUsers = "select * from users";
     var cmd = db.CreateCommand(getUsers);
     var reader = cmd.ExecuteReader();
@@ -95,7 +105,7 @@ void RootPost(HttpListenerRequest req, HttpListenerResponse res)
 
     StreamReader reader = new(req.InputStream, req.ContentEncoding);
     var cmd = db.CreateCommand("insert into users (name) values ($1) RETURNING id");
-    
+
     string postBody = reader.ReadToEnd();
     Console.WriteLine(postBody);
 
@@ -105,7 +115,7 @@ void RootPost(HttpListenerRequest req, HttpListenerResponse res)
 
     if (split[0] == "name")
     {
-        cmd.Parameters.AddWithValue(column);
+        cmd.Parameters.AddWithValue(postBody);
     }
 
     cmd.ExecuteNonQuery();
@@ -116,6 +126,8 @@ void RootPost(HttpListenerRequest req, HttpListenerResponse res)
     res.StatusCode = (int)HttpStatusCode.Created;
     res.Close();
 }
+
+
 
 void NotFound(HttpListenerResponse res)
 {
