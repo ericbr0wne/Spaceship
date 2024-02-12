@@ -113,6 +113,7 @@ void RootPost(HttpListenerRequest req, HttpListenerResponse res)
 
 void Result(string postBody, HttpListenerResponse res)
 {
+    // curl -d "name=Mohd" localhost:3000/post/user
     // used to get result randomly until Damage  method be ready
     bool isHit = new Random().Next(0, 2) == 0;
 
