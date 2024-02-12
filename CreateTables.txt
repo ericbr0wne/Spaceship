@@ -1,7 +1,8 @@
 ﻿CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    hp INT NOT NULL DEFAULT 3
+    hp INT NOT NULL DEFAULT 3,
+    wins INT NOT NULL DEFAULT 0
 );
 CREATE TABLE position (
     id SERIAL PRIMARY KEY,
@@ -25,3 +26,11 @@ INSERT INTO position (vertical, horizontal) VALUES
 ('H', 1), ('H', 2), ('H', 3), ('H', 4), ('H', 5), ('H', 6), ('H', 7), ('H', 8), ('H', 9), ('H', 10),
 ('I', 1), ('I', 2), ('I', 3), ('I', 4), ('I', 5), ('I', 6), ('I', 7), ('I', 8), ('I', 9), ('I', 10),
 ('J', 1), ('J', 2), ('J', 3), ('J', 4), ('J', 5), ('J', 6), ('J', 7), ('J', 8), ('J', 9), ('J', 10);
+
+CREATE TABLE game (
+    id SERIAL PRIMARY KEY,
+    user1_id INT REFERENCES users(id),
+    user2_id INT REFERENCES users(id),
+    action TEXT,
+    winner_id INT REFERENCES users(id)
+);
