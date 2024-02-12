@@ -48,6 +48,7 @@ void HandleRequest(IAsyncResult result)
 
 void Router(HttpListenerContext context)
 {
+    string message = "";
     User user = new(db);
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
