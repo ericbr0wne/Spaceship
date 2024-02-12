@@ -116,27 +116,21 @@ void PostGamePlayers(HttpListenerRequest req, HttpListenerResponse res)
 
     StreamReader reader = new(req.InputStream, req.ContentEncoding);
     var cmd = db.CreateCommand("INSERT INTO game (user1_id, user2_id) VALUES (@user1_id, @user2_id)");
-
     string postBody = reader.ReadToEnd();
     Console.WriteLine(postBody);
-
     string[] split = postBody.Split("&");
     string[] user1 = split[0].Split("=");
     string[] user2 = split[1].Split("=");
-
     if (user1[0] == "user1_id" && user2[0] == "user2_id")
     {
         cmd.Parameters.AddWithValue("@user1_id", int.Parse(user1[1]));
         cmd.Parameters.AddWithValue("@user2_id", int.Parse(user2[1]));
     }
-
     cmd.ExecuteNonQuery();
-
     Console.WriteLine($"Created the following in db: {postBody}");
     res.StatusCode = (int)HttpStatusCode.Created;
     res.Close();
 }
-
 
 void NotFound(HttpListenerResponse res)
     {
