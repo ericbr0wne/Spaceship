@@ -49,6 +49,7 @@ void HandleRequest(IAsyncResult result)
 void Router(HttpListenerContext context)
 {
     User user = new(db);
+    Attack attack = new(db);
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
@@ -57,10 +58,16 @@ void Router(HttpListenerContext context)
         case ("GET", "/users"):
             RootGet(response);
             break;
-        case ("POST", "/post/user"):
+        case ("POST", "/attack"):
+            attack.Check(request, response);
+            break;
+        case ("POST", $"/2/user"):
             RootPost(request, response);
             break;
-        case ("POST", "/post/position"):
+        case ("POST", "/1/position"):
+            user.PositionPost(request, response);
+            break;
+        case ("POST", "/2/position"):
             user.PositionPost(request, response);
             break;
         default:
@@ -71,7 +78,7 @@ void Router(HttpListenerContext context)
 
 void RootGet(HttpListenerResponse response)
 {
-
+    string message = "";
     const string getUsers = "select * from users";
     var cmd = db.CreateCommand(getUsers);
     var reader = cmd.ExecuteReader();
