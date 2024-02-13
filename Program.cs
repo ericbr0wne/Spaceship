@@ -1,4 +1,5 @@
 using Npgsql;
+using NpgsqlTypes;
 using Spaceship;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -46,6 +47,10 @@ void HandleRequest(IAsyncResult result)
     }
 }
 
+int gameId;
+int userId;
+int positionId;
+
 void Router(HttpListenerContext context)
 {
     User user = new(db);
@@ -55,7 +60,7 @@ void Router(HttpListenerContext context)
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
-        case ("GET", "/users"):
+        case ("GET", "/get/users"):
             RootGet(response);
             break;
         case ("POST", "/attack"):
@@ -67,8 +72,9 @@ void Router(HttpListenerContext context)
         case ("POST", "/1/position"):
             user.PositionPost(request, response);
             break;
-        case ("POST", "/2/position"):
-            user.PositionPost(request, response);
+        case ("POST", "/post/gameplayers"):
+            PostGamePlayers(request, response);
+
             break;
         default:
             NotFound(response);
@@ -76,10 +82,12 @@ void Router(HttpListenerContext context)
     }
 }
 
+
 void RootGet(HttpListenerResponse response)
 {
+    // curl -X GET http://localhost:3000/get/users
     string message = "";
-    const string getUsers = "select * from users";
+    const string getUsers = "select * from users;";
     var cmd = db.CreateCommand(getUsers);
     var reader = cmd.ExecuteReader();
     response.ContentType = "text/plain";
@@ -104,8 +112,8 @@ void RootPost(HttpListenerRequest req, HttpListenerResponse res)
     string postBody = reader.ReadToEnd();
     Console.WriteLine(postBody);
     string[] split = postBody.Split("=");
-    string column = split[1];
-    if (split[0] == "name")
+    string name = split[1]; 
+    if (split[0] == "user")
     {
         cmd.Parameters.AddWithValue(postBody);
     }
@@ -115,10 +123,30 @@ void RootPost(HttpListenerRequest req, HttpListenerResponse res)
     res.Close();
 }
 
-
-
-void NotFound(HttpListenerResponse res)
+void PostGamePlayers(HttpListenerRequest req, HttpListenerResponse res)
 {
-    res.StatusCode = (int)HttpStatusCode.NotFound;
+    // curl -d "user1_id=123&user2_id=456" -X POST http://localhost:3000/post/gameplayers
+
+    StreamReader reader = new(req.InputStream, req.ContentEncoding);
+    var cmd = db.CreateCommand("INSERT INTO game (user1_id, user2_id) VALUES (@user1_id, @user2_id)");
+    string postBody = reader.ReadToEnd();
+    Console.WriteLine(postBody);
+    string[] split = postBody.Split("&");
+    string[] user1 = split[0].Split("=");
+    string[] user2 = split[1].Split("=");
+    if (user1[0] == "user1_id" && user2[0] == "user2_id")
+    {
+        cmd.Parameters.AddWithValue("@user1_id", int.Parse(user1[1]));
+        cmd.Parameters.AddWithValue("@user2_id", int.Parse(user2[1]));
+    }
+    cmd.ExecuteNonQuery();
+    Console.WriteLine($"Created the following in db: {postBody}");
+    res.StatusCode = (int)HttpStatusCode.Created;
     res.Close();
 }
+
+void NotFound(HttpListenerResponse res)
+    {
+        res.StatusCode = (int)HttpStatusCode.NotFound;
+        res.Close();
+    }

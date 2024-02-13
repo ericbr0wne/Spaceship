@@ -1,5 +1,8 @@
 ﻿RootGet (get users table)
-curl -X GET http://localhost:3000/users
+curl -X GET http://localhost:3000/get/users
 
 RootPost (post user into users table)
 curl -d "user=eric" -X POST http://localhost:3000/post/user
+
+PostGamePlayers(post player1 and player2 into game table)
+curl -d "user1_id=1&user2_id=2" -X POST http://localhost:3000/post/gameplayers
