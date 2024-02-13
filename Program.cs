@@ -48,7 +48,6 @@ void HandleRequest(IAsyncResult result)
 
 void Router(HttpListenerContext context)
 {
-    string message = "";
     User user = new(db);
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
@@ -72,7 +71,7 @@ void Router(HttpListenerContext context)
 
 void RootGet(HttpListenerResponse response)
 {
-
+    string message = "";
     const string getUsers = "select * from users";
     var cmd = db.CreateCommand(getUsers);
     var reader = cmd.ExecuteReader();
