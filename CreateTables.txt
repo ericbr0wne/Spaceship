@@ -1,6 +1,6 @@
 ﻿CREATE TABLE users (
-    id TEXT UNIQUE PRIMARY KEY,
-    name TEXT,
+    id int UNIQUE PRIMARY KEY,
+    name UNIQUE TEXT,
     hp INT NOT NULL DEFAULT 3,
     win bool DEFAULT FALSE
 );
@@ -11,7 +11,7 @@ CREATE TABLE position (
 );
 CREATE TABLE users_x_position (
     id SERIAL PRIMARY KEY,
-    userID TEXT REFERENCES users(id),
+    userID INT REFERENCES users(id),
     mapID INT REFERENCES position(id)
 );
 
