@@ -1,8 +1,15 @@
 ﻿CREATE TABLE users (
+
+    id int UNIQUE PRIMARY KEY,
+    name UNIQUE TEXT,
+    hp INT NOT NULL DEFAULT 3,
+    win bool DEFAULT FALSE
+
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     hp INT NOT NULL DEFAULT 3,
     wins INT NOT NULL DEFAULT 0
+
 );
 CREATE TABLE position (
     id SERIAL PRIMARY KEY,

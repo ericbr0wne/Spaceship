@@ -1,10 +1,14 @@
-﻿using Npgsql;
+using Npgsql;
 using NpgsqlTypes;
 using Spaceship;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using System.Net;
+using System.Net.WebSockets;
 using System.Text;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=spaceship";
 await using var db = NpgsqlDataSource.Create(dbUri);
@@ -49,6 +53,8 @@ int positionId;
 
 void Router(HttpListenerContext context)
 {
+    User user = new(db);
+    Attack attack = new(db);
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
@@ -57,11 +63,18 @@ void Router(HttpListenerContext context)
         case ("GET", "/get/users"):
             RootGet(response);
             break;
-        case ("POST", "/post/user"):
+        case ("POST", "/attack"):
+            attack.Check(request, response);
+            break;
+        case ("POST", $"/2/user"):
             RootPost(request, response);
+            break;
+        case ("POST", "/1/position"):
+            user.PositionPost(request, response);
             break;
         case ("POST", "/post/gameplayers"):
             PostGamePlayers(request, response);
+
             break;
         default:
             NotFound(response);
@@ -94,21 +107,21 @@ void RootPost(HttpListenerRequest req, HttpListenerResponse res)
 {
     // curl -d "user=eric" -X POST http://localhost:3000/post/user
     StreamReader reader = new(req.InputStream, req.ContentEncoding);
-    var cmd = db.CreateCommand("insert into users (name) values (@name) RETURNING id");
+    var cmd = db.CreateCommand("insert into users (name) values ($1) RETURNING id");
+
     string postBody = reader.ReadToEnd();
     Console.WriteLine(postBody);
     string[] split = postBody.Split("=");
-    string name = split[1]; // Assuming the format is "user=name"
+    string name = split[1]; 
     if (split[0] == "user")
     {
-        cmd.Parameters.AddWithValue("@name", name);
+        cmd.Parameters.AddWithValue(postBody);
     }
     cmd.ExecuteNonQuery();
     Console.WriteLine($"Created the following in db: {postBody}");
     res.StatusCode = (int)HttpStatusCode.Created;
     res.Close();
 }
-
 
 void PostGamePlayers(HttpListenerRequest req, HttpListenerResponse res)
 {
