@@ -1,31 +1,37 @@
-﻿CREATE TABLE users IF NOT EXISTS (
+﻿drop table user_hitpoints;
+drop table users_x_position;
+drop table game;
+TRUNCATE TABLE position RESTART IDENTITY;
+TRUNCATE TABLE users RESTART IDENTITY;
+
+CREATE TABLE IF NOT EXISTS users(
     id SERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
     password_hash TEXT,
     wins INT NOT NULL DEFAULT 0
 ); 
 
-CREATE TABLE position IF NOT EXISTS(
+CREATE TABLE IF NOT EXISTS position(
     id SERIAL PRIMARY KEY,
     vertical TEXT NOT NULL,
     horizontal INT NOT NULL
 );
 
 
-CREATE TABLE game(
+CREATE TABLE IF NOT EXISTS game(
     id SERIAL PRIMARY KEY,
     user1_id INT REFERENCES users(id),
     user2_id INT REFERENCES users(id),
     win_id INT REFERENCES users(id)
 );
 
-CREATE TABLE users_x_position(
+CREATE TABLE IF NOT EXISTS users_x_position(
     game_id INT REFERENCES game(id),
     user_id INT REFERENCES users(id),
     position_id INT REFERENCES position(id)
-);c
+);
 
-CREATE TABLE user_hitpoints(
+CREATE TABLE IF NOT EXISTS user_hitpoints(
     game_id INT REFERENCES game(id),
     user_id INT REFERENCES users(id),
     hp INT NOT NULL DEFAULT 3,
@@ -43,4 +49,3 @@ INSERT INTO position (vertical, horizontal) VALUES
 ('h', 1), ('h', 2), ('h', 3), ('h', 4), ('h', 5), ('h', 6), ('h', 7), ('h', 8), ('h', 9), ('h', 10),
 ('i', 1), ('i', 2), ('i', 3), ('i', 4), ('i', 5), ('i', 6), ('i', 7), ('i', 8), ('i', 9), ('i', 10),
 ('j', 1), ('j', 2), ('j', 3), ('j', 4), ('j', 5), ('j', 6), ('j', 7), ('j', 8), ('j', 9), ('j', 10);
-
