@@ -13,7 +13,7 @@ string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Dat
 await using var db = NpgsqlDataSource.Create(dbUri);
 bool listen = true;
 
-Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
+Console.CancelKeyPress += delegate(object? sender, ConsoleCancelEventArgs e)
 {
     Console.WriteLine("Server gracefully shutdown..");
     e.Cancel = true;
@@ -27,9 +27,13 @@ listener.Prefixes.Add($"http://localhost:{port}/");
 try
 {
     listener.Start();
-    listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);  //Här körs resten av kod i Async /wrapper 
+    listener.BeginGetContext(new AsyncCallback(HandleRequest), listener); //Här körs resten av kod i Async /wrapper 
     Console.WriteLine("Server listening on port: " + port);
-    while (listen) { };
+    while (listen)
+    {
+    }
+
+    ;
 }
 finally
 {
@@ -49,6 +53,8 @@ void HandleRequest(IAsyncResult result)
 void Router(HttpListenerContext context)
 {
     User user = new(db);
+    Attack attack = new(db);
+    
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
@@ -57,10 +63,16 @@ void Router(HttpListenerContext context)
         case ("GET", "/users"):
             RootGet(response);
             break;
-        case ("POST", "/post/user"):
-            RootPost(request, response);
+        case ("POST", "/attack"):
+            attack.Check(request, response);
             break;
-        case ("POST", "/post/position"):
+        case ("POST", $"/newplayer"):
+            user.CreatePlayer(request, response);
+            break;
+        case ("POST", "/1/position"):
+            user.PositionPost(request, response);
+            break;
+        case ("POST", "/2/position"):
             user.PositionPost(request, response);
             break;
         default:
@@ -83,32 +95,12 @@ void RootGet(HttpListenerResponse response)
         message += reader.GetString(1) + ", "; // name
         message += reader.GetInt32(2) + ", "; // hp
     }
+
     byte[] buffer = Encoding.UTF8.GetBytes(message);
     response.OutputStream.Write(buffer, 0, buffer.Length);
     response.OutputStream.Close();
 }
 
-void RootPost(HttpListenerRequest req, HttpListenerResponse res)
-{
-    // curl -d "user=eric" -X POST http://localhost:3000/post/user
-    StreamReader reader = new(req.InputStream, req.ContentEncoding);
-    var cmd = db.CreateCommand("insert into users (name) values ($1) RETURNING id");
-
-    string postBody = reader.ReadToEnd();
-    Console.WriteLine(postBody);
-    string[] split = postBody.Split("=");
-    string column = split[1];
-    if (split[0] == "name")
-    {
-        cmd.Parameters.AddWithValue(postBody);
-    }
-    cmd.ExecuteNonQuery();
-    Console.WriteLine($"Created the following in db: {postBody}");
-   
-    Result(postBody, res);
-    res.StatusCode = (int)HttpStatusCode.Created;
-    res.Close();
-}
 
 void Result(string postBody, HttpListenerResponse res)
 {
