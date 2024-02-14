@@ -69,12 +69,10 @@ void Router(HttpListenerContext context)
         case ("POST", $"/newplayer"):
             user.CreatePlayer(request, response);
             break;
-        case ("POST", "/1/position"):
-            user.PositionPost(request, response);
+        case ("POST", "/position"):
+            user.Position(request, response);
             break;
-        case ("POST", "/2/position"):
-            user.PositionPost(request, response);
-            break;
+       
         default:
             NotFound(response);
             break;

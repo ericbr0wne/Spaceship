@@ -20,7 +20,7 @@ public class User
 
     public void CreatePlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
-        // curl -d "eric" -X POST http://localhost:3000/newplayer
+        // curl -s -d "eric" -X POST http://localhost:3000/newplayer
 
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string playerName = reader.ReadToEnd().ToLower();
@@ -59,15 +59,15 @@ public class User
     }
 
 
-    public void PositionPost(HttpListenerRequest req, HttpListenerResponse res)
+    public void Position(HttpListenerRequest req, HttpListenerResponse res)
     {
-        //curl -d "C,7,Benny" -X POST http://localhost:3000/post/position
+        //curl -s -d "C,7,Benny" -X POST http://localhost:3000/position
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd();
 
         string[] split = postBody.Split(",");
         var posLetter = split[0];
-        var posNumber = split[1];
+        var posNumber = split[1]; 
         var posName = split[2];
 
 
