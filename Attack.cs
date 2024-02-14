@@ -46,8 +46,6 @@ public class Attack
                 var defenderPositionCommand = _db.CreateCommand($"SELECT mapID FROM users_x_position WHERE userID = {defender};");
                 int defencePosition = Convert.ToInt32(defenderPositionCommand.ExecuteScalar());
 
-
-
                 if (defencePosition == AttackPosition)
                 {
                     var hitRemoveHpCommand = _db.CreateCommand($"UPDATE users SET hp = hp - 1 WHERE id = {defender};");
@@ -73,17 +71,11 @@ public class Attack
                 }
                 else if (defencePosition != AttackPosition)
                 {
-
                     Console.WriteLine($"You missed the target!");
-
                 }
             }
-            else
-            {
-
-            }
-
         }
+
         else
         {
             Console.WriteLine("Game over! You got destroyed!");

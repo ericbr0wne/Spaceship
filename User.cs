@@ -23,7 +23,6 @@ public class User
     }
 
 
-
     public void PositionPost(HttpListenerRequest req, HttpListenerResponse res)
     {
 
@@ -69,15 +68,9 @@ public class User
         {
             Console.WriteLine("Failed to retrieve or parse Map ID.");
         }
-
         res.StatusCode = (int)HttpStatusCode.Created;
         res.Close();
-
     }
-
-
-
-
 
 
 }

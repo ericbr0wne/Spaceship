@@ -1,15 +1,8 @@
 ﻿CREATE TABLE users (
-
-    id int UNIQUE PRIMARY KEY,
-    name UNIQUE TEXT,
-    hp INT NOT NULL DEFAULT 3,
-    win bool DEFAULT FALSE
-
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    hp INT NOT NULL DEFAULT 3,
+    name TEXT UNIQUE NOT NULL,
+    password_hash TEXT,    
     wins INT NOT NULL DEFAULT 0
-
 );
 CREATE TABLE position (
     id SERIAL PRIMARY KEY,
@@ -38,6 +31,12 @@ CREATE TABLE game (
     id SERIAL PRIMARY KEY,
     user1_id INT REFERENCES users(id),
     user2_id INT REFERENCES users(id),
-    action TEXT,
-    winner_id INT REFERENCES users(id)
+    win_id INT REFERENCES users(id)
+);
+
+CREATE TABLE users_hitpoints (
+    game_id INT REFERENCES game(id),
+    user_id INT REFERENCES users(id),
+    hp INT NOT NULL DEFAULT 3,
+    PRIMARY KEY (game_id, user_id)
 );
