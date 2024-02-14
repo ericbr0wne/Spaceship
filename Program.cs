@@ -1,19 +1,15 @@
 using Npgsql;
 using Spaceship;
-using System;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Data;
 using System.Net;
-using System.Net.WebSockets;
+using System.Reflection.Metadata;
 using System.Text;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=spaceship";
-await using var db = NpgsqlDataSource.Create(dbUri);
+await using var _db = NpgsqlDataSource.Create(dbUri);
 bool listen = true;
 
-Console.CancelKeyPress += delegate(object? sender, ConsoleCancelEventArgs e)
+Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
     Console.WriteLine("Server gracefully shutdown..");
     e.Cancel = true;
@@ -32,8 +28,6 @@ try
     while (listen)
     {
     }
-
-    ;
 }
 finally
 {
@@ -50,17 +44,22 @@ void HandleRequest(IAsyncResult result)
     }
 }
 
+int gameId;
+int userId;
+int positionId;
+
 void Router(HttpListenerContext context)
 {
-    User user = new(db);
-    Attack attack = new(db);
-    
+    User user = new(_db);
+    Attack attack = new(_db);
+    GamePlay gameplay = new(_db);
+
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
-        case ("GET", "/users"):
+        case ("GET", "/get/users"):
             RootGet(response);
             break;
         case ("POST", "/attack"):
@@ -72,18 +71,23 @@ void Router(HttpListenerContext context)
         case ("POST", "/position"):
             user.Position(request, response);
             break;
-       
+        case ("POST", "/joingame"):
+            gameplay.JoinGame(request, response);
+            break;
+
         default:
             NotFound(response);
             break;
     }
 }
 
+
 void RootGet(HttpListenerResponse response)
 {
+    // curl -X GET http://localhost:3000/get/users
     string message = "";
-    const string getUsers = "select * from users";
-    var cmd = db.CreateCommand(getUsers);
+    const string getUsers = "select * from users;";
+    var cmd = _db.CreateCommand(getUsers);
     var reader = cmd.ExecuteReader();
     response.ContentType = "text/plain";
     response.StatusCode = (int)HttpStatusCode.OK;
@@ -99,30 +103,6 @@ void RootGet(HttpListenerResponse response)
     response.OutputStream.Close();
 }
 
-
-void Result(string postBody, HttpListenerResponse res)
-{
-    // curl -d "name=Mohd" localhost:3000/post/user
-    // used to get result randomly until Damage  method be ready
-    bool isHit = new Random().Next(0, 2) == 0;
-
-    if (isHit)
-    {
-        Console.WriteLine("User hit the target!");
-    }
-    else
-    {
-        Console.WriteLine("User missed the target!");
-    }
-
-    string responseMessage = isHit ? "\nHit! Damage applied." : "\nMissed! Life decreased.";
-    byte[] buffer = Encoding.UTF8.GetBytes(responseMessage);
-
-    res.ContentType = "text/plain";
-    res.StatusCode = (int)HttpStatusCode.OK;
-    res.OutputStream.Write(buffer, 0, buffer.Length);
-    res.OutputStream.Close();
-}
 
 void NotFound(HttpListenerResponse res)
 {

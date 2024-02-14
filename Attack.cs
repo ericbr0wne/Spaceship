@@ -30,6 +30,7 @@ public class Attack
         attackerCommand.Parameters.AddWithValue(attacker);
         int attackerHp = Convert.ToInt32(attackerCommand.ExecuteScalar());
         attackerCommand.ExecuteNonQuery();
+
         if (attackerHp > 0)
         {
 
@@ -70,12 +71,8 @@ public class Attack
                     Console.WriteLine($"You missed the target!");
                 }
             }
-            else
-            {
-
-            }
-
         }
+
         else
         {
             Console.WriteLine("Game over! You got destroyed!");
