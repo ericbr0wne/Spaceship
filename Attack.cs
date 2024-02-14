@@ -1,10 +1,5 @@
 ﻿using Npgsql;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Spaceship;
 
@@ -20,17 +15,18 @@ public class Attack
     public void Check(HttpListenerRequest req, HttpListenerResponse res)
     {
 
-        //curl -d "1,C,4,2" -X POST http://localhost:3000/attack
+        //curl -s -d "1,C,4,7" -X POST http://localhost:3000/attack
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
-        string postBody = reader.ReadToEnd();
+        string postBody = reader.ReadToEnd().ToLower();
 
         string[] split = postBody.Split(",");
-        int attacker = int.Parse(split[0]);                //you
-        var posLetter = split[1];               //letter
-        int posNumber = int.Parse(split[2]);    //nbr
-        int defender = int.Parse(split[3]);                //defender
+        int attacker = int.Parse(split[0]);             //you         1
+        var posLetter = split[1];                       //letter
+        int posNumber = int.Parse(split[2]);            //nbr
+        int defender = int.Parse(split[3]);             //defender    7
 
-        var attackerCommand = _db.CreateCommand($"SELECT hp FROM users WHERE id = $1;"); //KOLLA HP PÅ DEFENDER
+
+        var attackerCommand = _db.CreateCommand($"SELECT hp FROM users_hitpoints WHERE id = $1;"); //KOLLA HP PÅ DEFENDER I USERS_HITPOINTS
         attackerCommand.Parameters.AddWithValue(attacker);
         int attackerHp = Convert.ToInt32(attackerCommand.ExecuteScalar());
         attackerCommand.ExecuteNonQuery();
@@ -42,22 +38,22 @@ public class Attack
             if (attack != null && int.TryParse(attack.ToString(), out int AttackPosition))
             {
                 Console.WriteLine($"{attacker} is attacking on square: {posLetter} {posNumber} !");
-
                 var defenderPositionCommand = _db.CreateCommand($"SELECT mapID FROM users_x_position WHERE userID = {defender};");
                 int defencePosition = Convert.ToInt32(defenderPositionCommand.ExecuteScalar());
 
                 if (defencePosition == AttackPosition)
                 {
-                    var hitRemoveHpCommand = _db.CreateCommand($"UPDATE users SET hp = hp - 1 WHERE id = {defender};");
+                    var hitRemoveHpCommand = _db.CreateCommand($"UPDATE users_hitpoints SET hp = hp - 1 WHERE id = {defender};");
                     hitRemoveHpCommand.ExecuteNonQuery();
 
-                    var newDefenderHp = _db.CreateCommand($"SELECT hp FROM users WHERE id = {defender};");
+                    var newDefenderHp = _db.CreateCommand($"SELECT hp FROM users_hitpoints WHERE id = {defender};");
                     object? defenderHpObject = newDefenderHp.ExecuteScalar();
                     if (defenderHpObject != null && int.TryParse(defenderHpObject.ToString(), out int defenderHp))
                     {
                         if (defenderHp == 0)
                         {
                             Console.WriteLine("KABOOOOM! You destroyed the enemy");
+                            //win_id
                         }
                         else
                         {
@@ -69,7 +65,7 @@ public class Attack
                         Console.WriteLine("Could not parse defender HP.");
                     }
                 }
-                else if (defencePosition != AttackPosition)
+                else
                 {
                     Console.WriteLine($"You missed the target!");
                 }
@@ -80,7 +76,7 @@ public class Attack
         {
             Console.WriteLine("Game over! You got destroyed!");
             gameover = true;
-            //listen = false and break;
+            //gametable ends. You lost the game!
         }
         res.StatusCode = (int)HttpStatusCode.Created;
         res.Close();

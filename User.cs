@@ -11,28 +11,63 @@ namespace Spaceship;
 public class User
 {
     private NpgsqlDataSource _db;
+
     public User(NpgsqlDataSource db)
     {
         _db = db;
     }
-    public void Name()
+
+
+    public void CreatePlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
+        // curl -s -d "eric" -X POST http://localhost:3000/newplayer
 
+        StreamReader reader = new(req.InputStream, req.ContentEncoding);
+        string playerName = reader.ReadToEnd().ToLower();
 
+        var nameCheck = _db.CreateCommand("Select id From users WHERE name = ($1)");
+        nameCheck.Parameters.AddWithValue(playerName);
+        int playerId = Convert.ToInt32(nameCheck.ExecuteScalar());
+        if (playerId > 0 )
+        {
+            string message = $"Player {playerName} alredy exists";
+            res.StatusCode = (int)HttpStatusCode.Conflict;
+            
+            res.ContentType = "text/plain";
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            res.OutputStream.Write(buffer, 0, buffer.Length);
+            res.OutputStream.Close();
+        }
+        else
+        {
+            var cmd = _db.CreateCommand("insert into users (name) values ($1)");
 
+            cmd.Parameters.AddWithValue(playerName);
+            cmd.ExecuteNonQuery();
+
+            string message = $"Created the following in db: {playerName}";
+            
+            
+            res.ContentType = "text/plain";
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            res.OutputStream.Write(buffer, 0, buffer.Length);
+            res.OutputStream.Close();
+            res.StatusCode = (int)HttpStatusCode.Created;
+        }
+
+        res.Close();
     }
 
+    public void Position(HttpListenerRequest req, HttpListenerResponse res)
 
-    public void PositionPost(HttpListenerRequest req, HttpListenerResponse res)
     {
-
-        //curl -d "C,7,Benny" -X POST http://localhost:3000/post/position
+        //curl -s -d "C,7,Benny" -X POST http://localhost:3000/position
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd();
 
         string[] split = postBody.Split(",");
         var posLetter = split[0];
-        var posNumber = split[1];
+        var posNumber = split[1]; 
         var posName = split[2];
 
 
@@ -55,7 +90,6 @@ public class User
             }
             else if (ifUserExist != mapId)
             {
-
                 var cmd = _db.CreateCommand("INSERT INTO users_x_position (userid, mapid) VALUES ($1, $2)");
                 cmd.Parameters.AddWithValue(userId);
                 cmd.Parameters.AddWithValue(mapId);
@@ -71,6 +105,4 @@ public class User
         res.StatusCode = (int)HttpStatusCode.Created;
         res.Close();
     }
-
-
 }
