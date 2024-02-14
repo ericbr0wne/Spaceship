@@ -6,10 +6,10 @@ using System.Text;
 
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=spaceship";
-await using var db = NpgsqlDataSource.Create(dbUri);
+await using var _db = NpgsqlDataSource.Create(dbUri);
 bool listen = true;
 
-Console.CancelKeyPress += delegate(object? sender, ConsoleCancelEventArgs e)
+Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
     Console.WriteLine("Server gracefully shutdown..");
     e.Cancel = true;
@@ -28,8 +28,6 @@ try
     while (listen)
     {
     }
-
-    ;
 }
 finally
 {
@@ -52,9 +50,10 @@ int positionId;
 
 void Router(HttpListenerContext context)
 {
-    User user = new(db);
-    Attack attack = new(db);
-    
+    User user = new(_db);
+    Attack attack = new(_db);
+    GamePlay gameplay = new(_db);
+
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
@@ -72,8 +71,8 @@ void Router(HttpListenerContext context)
         case ("POST", "/position"):
             user.Position(request, response);
             break;
-        case ("POST", "/post/gameplayers"):
-            PostGamePlayers(request, response);
+        case ("POST", "/joingame"):
+            gameplay.JoinGame(request, response);
             break;
 
         default:
@@ -88,7 +87,7 @@ void RootGet(HttpListenerResponse response)
     // curl -X GET http://localhost:3000/get/users
     string message = "";
     const string getUsers = "select * from users;";
-    var cmd = db.CreateCommand(getUsers);
+    var cmd = _db.CreateCommand(getUsers);
     var reader = cmd.ExecuteReader();
     response.ContentType = "text/plain";
     response.StatusCode = (int)HttpStatusCode.OK;
@@ -104,28 +103,9 @@ void RootGet(HttpListenerResponse response)
     response.OutputStream.Close();
 }
 
-void PostGamePlayers(HttpListenerRequest req, HttpListenerResponse res)
-{
-    // curl -d "user1_id=123&user2_id=456" -X POST http://localhost:3000/post/gameplayers
 
-    StreamReader reader = new(req.InputStream, req.ContentEncoding);
-    var cmd = db.CreateCommand("INSERT INTO game (user1_id, user2_id) VALUES (@user1_id, @user2_id)");
-    string postBody = reader.ReadToEnd();
-    Console.WriteLine(postBody);
-    string[] split = postBody.Split("&");
-    string[] user1 = split[0].Split("=");
-    string[] user2 = split[1].Split("=");
-    if (user1[0] == "user1_id" && user2[0] == "user2_id")
-    {
-        cmd.Parameters.AddWithValue("@user1_id", int.Parse(user1[1]));
-        cmd.Parameters.AddWithValue("@user2_id", int.Parse(user2[1]));
-    }
-    cmd.ExecuteNonQuery();
-    Console.WriteLine($"Created the following in db: {postBody}");
-    res.StatusCode = (int)HttpStatusCode.Created;
-    res.Close();
-}
 void NotFound(HttpListenerResponse res)
 {
     res.StatusCode = (int)HttpStatusCode.NotFound;
     res.Close();
+}

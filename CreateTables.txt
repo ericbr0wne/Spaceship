@@ -1,30 +1,31 @@
-﻿CREATE TABLE users (
+﻿CREATE TABLE users IF NOT EXISTS (
     id SERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
     password_hash TEXT,
     wins INT NOT NULL DEFAULT 0
 ); 
 
-CREATE TABLE position (
+CREATE TABLE position IF NOT EXISTS(
     id SERIAL PRIMARY KEY,
     vertical TEXT NOT NULL,
     horizontal INT NOT NULL
 );
 
-CREATE TABLE users_x_position (
-    id SERIAL PRIMARY KEY,
-    userID INT REFERENCES users(id),
-    mapID INT REFERENCES position(id)
-);
 
-CREATE TABLE game (
+CREATE TABLE game(
     id SERIAL PRIMARY KEY,
     user1_id INT REFERENCES users(id),
     user2_id INT REFERENCES users(id),
     win_id INT REFERENCES users(id)
 );
 
-CREATE TABLE user_hitpoints (
+CREATE TABLE users_x_position(
+    game_id INT REFERENCES game(id),
+    user_id INT REFERENCES users(id),
+    position_id INT REFERENCES position(id)
+);c
+
+CREATE TABLE user_hitpoints(
     game_id INT REFERENCES game(id),
     user_id INT REFERENCES users(id),
     hp INT NOT NULL DEFAULT 3,

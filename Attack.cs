@@ -30,6 +30,7 @@ public class Attack
         attackerCommand.Parameters.AddWithValue(attacker);
         int attackerHp = Convert.ToInt32(attackerCommand.ExecuteScalar());
         attackerCommand.ExecuteNonQuery();
+
         if (attackerHp > 0)
         {
 
