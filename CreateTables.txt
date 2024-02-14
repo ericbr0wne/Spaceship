@@ -1,6 +1,6 @@
-﻿drop table user_hitpoints;
-drop table users_x_position;
-drop table game;
+﻿drop table if exists user_hitpoints;
+drop table if exists users_x_position;
+drop table if exists game;
 TRUNCATE TABLE position RESTART IDENTITY;
 TRUNCATE TABLE users RESTART IDENTITY;
 
