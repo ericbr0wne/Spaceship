@@ -58,8 +58,8 @@ public class User
         res.Close();
     }
 
-
     public void Position(HttpListenerRequest req, HttpListenerResponse res)
+
     {
         //curl -s -d "C,7,Benny" -X POST http://localhost:3000/position
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
@@ -102,7 +102,6 @@ public class User
         {
             Console.WriteLine("Failed to retrieve or parse Map ID.");
         }
-
         res.StatusCode = (int)HttpStatusCode.Created;
         res.Close();
     }

@@ -70,12 +70,8 @@ public class Attack
                     Console.WriteLine($"You missed the target!");
                 }
             }
-            else
-            {
-
-            }
-
         }
+
         else
         {
             Console.WriteLine("Game over! You got destroyed!");
