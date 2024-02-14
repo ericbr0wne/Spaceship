@@ -1,24 +1,40 @@
-﻿CREATE TABLe users (
-    id INT UNIQUE PRIMARY KEY,
-    name UNIQUE TEXT,
-    hp INT NOT NULL DEFAULT 3,
-    win bool DEFAULT FALSE
-);
+﻿CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    password_hash TEXT,
+    wins INT NOT NULL DEFAULT 0
+); 
+
 CREATE TABLE position (
     id SERIAL PRIMARY KEY,
     vertical TEXT NOT NULL,
     horizontal INT NOT NULL
 );
+
 CREATE TABLE users_x_position (
     id SERIAL PRIMARY KEY,
     userID INT REFERENCES users(id),
     mapID INT REFERENCES position(id)
 );
 
+CREATE TABLE game (
+    id SERIAL PRIMARY KEY,
+    user1_id INT REFERENCES users(id),
+    user2_id INT REFERENCES users(id),
+    win_id INT REFERENCES users(id)
+);
+
+CREATE TABLE user_hitpoints (
+    game_id INT REFERENCES game(id),
+    user_id INT REFERENCES users(id),
+    hp INT NOT NULL DEFAULT 3,
+    PRIMARY KEY (game_id, user_id)
+);
+
 INSERT INTO position (vertical, horizontal) VALUES
 ('a', 1), ('a', 2), ('a', 3), ('a', 4), ('a', 5), ('a', 6), ('a', 7), ('a', 8), ('a', 9), ('a', 10),
 ('b', 1), ('b', 2), ('b', 3), ('b', 4), ('b', 5), ('b', 6), ('b', 7), ('b', 8), ('b', 9), ('b', 10),
-('C', 1), ('C', 2), ('C', 3), ('C', 4), ('C', 5), ('C', 6), ('C', 7), ('C', 8), ('C', 9), ('C', 10),
+('c', 1), ('c', 2), ('c', 3), ('c', 4), ('c', 5), ('c', 6), ('c', 7), ('c', 8), ('c', 9), ('c', 10),
 ('d', 1), ('d', 2), ('d', 3), ('d', 4), ('d', 5), ('d', 6), ('d', 7), ('d', 8), ('d', 9), ('d', 10),
 ('e', 1), ('e', 2), ('e', 3), ('e', 4), ('e', 5), ('e', 6), ('e', 7), ('e', 8), ('e', 9), ('e', 10),
 ('f', 1), ('f', 2), ('f', 3), ('f', 4), ('f', 5), ('f', 6), ('f', 7), ('f', 8), ('f', 9), ('f', 10),
