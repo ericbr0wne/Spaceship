@@ -69,8 +69,8 @@ void Router(HttpListenerContext context)
         case ("POST", "/position"):
             user.Position(request, response);
             break;
-        case ("POST", "/joingame"):
-            gameplay.JoinGame(request, response);
+        case ("POST", "/newgame"):
+            gameplay.NewGame(request, response);
             break;
         default:
             router.NotFound(response);
