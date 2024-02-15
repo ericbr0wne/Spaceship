@@ -44,15 +44,13 @@ void HandleRequest(IAsyncResult result)
     }
 }
 
-int gameId;
-int userId;
-int positionId;
-
 void Router(HttpListenerContext context)
 {
+
     User user = new(_db);
     Attack attack = new(_db);
     GamePlay gameplay = new(_db);
+    Router router = new();
 
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
@@ -60,7 +58,7 @@ void Router(HttpListenerContext context)
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
         case ("GET", "/get/users"):
-            RootGet(response);
+            user.List(response);
             break;
         case ("POST", "/attack"):
             attack.Check(request, response);
@@ -74,38 +72,12 @@ void Router(HttpListenerContext context)
         case ("POST", "/joingame"):
             gameplay.JoinGame(request, response);
             break;
-
         default:
-            NotFound(response);
+            router.NotFound(response);
             break;
     }
 }
 
 
-void RootGet(HttpListenerResponse response)
-{
-    // curl -X GET http://localhost:3000/get/users
-    string message = "";
-    const string getUsers = "select * from users;";
-    var cmd = _db.CreateCommand(getUsers);
-    var reader = cmd.ExecuteReader();
-    response.ContentType = "text/plain";
-    response.StatusCode = (int)HttpStatusCode.OK;
-    while (reader.Read())
-    {
-        message += reader.GetInt32(0) + ", "; // user id
-        message += reader.GetString(1) + ", "; // name
-        message += reader.GetInt32(2) + ", "; // hp
-    }
-
-    byte[] buffer = Encoding.UTF8.GetBytes(message);
-    response.OutputStream.Write(buffer, 0, buffer.Length);
-    response.OutputStream.Close();
-}
 
 
-void NotFound(HttpListenerResponse res)
-{
-    res.StatusCode = (int)HttpStatusCode.NotFound;
-    res.Close();
-}
