@@ -21,9 +21,6 @@ public class GamePlay
     {
         // curl -d "new,player1,C,7" -X POST http://localhost:3000/newgame - Start new game
 
-        // curl -d "gameid,player2,C,2" -X POST http://localhost:3000/newgame - Join existing game
-
-
         res.ContentType = "text/plain";
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
@@ -68,9 +65,74 @@ public class GamePlay
                 res.StatusCode = (int)HttpStatusCode.Created;
                 res.OutputStream.Close();
             }
-            
+            else
+            {
+                Console.WriteLine("Type new as gameId");
+            }
         }
+        
     }
+    
+    public void JoinGame(HttpListenerRequest req, HttpListenerResponse res)
+    {
+        // curl -d "gameid,player2,C,2" -X POST http://localhost:3000/joingame - Join existing game
+        
+        
+        res.ContentType = "text/plain";
+        StreamReader reader = new(req.InputStream, req.ContentEncoding);
+        string postBody = reader.ReadToEnd().ToLower();
+
+        string[] split = postBody.Split(",");
+        int gameid = int.Parse(split[0]);
+        string playerName = split[1];
+        string posLr = split[2];
+        string posNr = split[3];
+
+
+        var getUserIdCommand = _db.CreateCommand($"SELECT id FROM users WHERE name = '{playerName}';");
+        int userId = Convert.ToInt32(getUserIdCommand.ExecuteScalar());
+
+        var getPositionCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLr}' AND horizontal = {posNr};");
+        object? posIdObject = getPositionCommand.ExecuteScalar();
+
+        if (posIdObject != null && int.TryParse(posIdObject.ToString(), out int positionId))
+        {
+            if (gameid > 0)
+            {
+                var gameInsertCommand = _db.CreateCommand("INSERT INTO game (user2_id) VALUES ($1) RETURNING id;");
+                gameInsertCommand.Parameters.AddWithValue(userId);
+                int newGameId = Convert.ToInt32(gameInsertCommand.ExecuteScalar());
+
+                var posInsertCommand = _db.CreateCommand("INSERT INTO users_x_position (game_id, user_id, position_id) VALUES ($1, $2, $3);");
+                posInsertCommand.Parameters.AddWithValue(newGameId);
+                posInsertCommand.Parameters.AddWithValue(userId);
+                posInsertCommand.Parameters.AddWithValue(positionId);
+                posInsertCommand.ExecuteNonQuery();
+
+                var insertHitpointsCmd = _db.CreateCommand("INSERT INTO user_hitpoints (game_id, user_id) VALUES ($1, $2);");
+                insertHitpointsCmd.Parameters.AddWithValue(newGameId);
+                insertHitpointsCmd.Parameters.AddWithValue(userId);
+                insertHitpointsCmd.ExecuteNonQuery();
+
+                string message = $"{playerName} joined game {newGameId} and placed position {positionId}";
+
+                byte[] buffer = Encoding.UTF8.GetBytes(message);
+                res.OutputStream.Write(buffer, 0, buffer.Length);
+                res.StatusCode = (int)HttpStatusCode.Created;
+                res.OutputStream.Close();
+            }
+            else
+            {
+                string message =$"GameId is does not exist";
+                byte[] buffer = Encoding.UTF8.GetBytes(message);
+                res.OutputStream.Write(buffer, 0, buffer.Length);
+                res.StatusCode = (int)HttpStatusCode.Created;
+                res.OutputStream.Close();
+            }
+        }
+        
+    }
+
 
     /*
 
