@@ -105,4 +105,28 @@ public class User
         res.StatusCode = (int)HttpStatusCode.Created;
         res.Close();
     }
+
+
+    public void List(HttpListenerResponse response)
+    {
+
+        // curl -X GET http://localhost:3000/get/users
+        string message = "";
+        const string getUsers = "select * from users;";
+        var cmd = _db.CreateCommand(getUsers);
+        var reader = cmd.ExecuteReader();
+        response.ContentType = "text/plain";
+        response.StatusCode = (int)HttpStatusCode.OK;
+        while (reader.Read())
+        {
+            message += reader.GetInt32(0) + ", "; // user id
+            message += reader.GetString(1) + ", "; // name
+            message += reader.GetInt32(2) + ", "; // hp
+        }
+
+        byte[] buffer = Encoding.UTF8.GetBytes(message);
+        response.OutputStream.Write(buffer, 0, buffer.Length);
+        response.OutputStream.Close();
+    }
+
 }

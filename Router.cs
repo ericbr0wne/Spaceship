@@ -6,6 +6,10 @@ namespace Spaceship;
 public class Router
 {
 
-   
-   
+    public void NotFound(HttpListenerResponse res)
+    {
+        res.StatusCode = (int)HttpStatusCode.NotFound;
+        res.Close();
+    }
+
 }
