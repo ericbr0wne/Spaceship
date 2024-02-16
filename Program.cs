@@ -61,27 +61,26 @@ void Router(HttpListenerContext context)
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
-
         case ("GET", "/start"):
             story.Intro(response);
             break;
         case ("GET", "/mission"):
             story.Mission(response);
             break;
-        case ("POST", "/attack"):
-            attack.AttackPlayer(request, response);
-            break;
         case ("POST", $"/createplayer"):
             user.CreatePlayer(request, response);
             break;
-        case ("POST", "/position"):
-            user.Position(request, response);
-            break;
+        // case ("POST", "/position"):
+        //     user.Position(request, response);
+        //     break;
         case ("POST", "/newgame"):
             gameplay.NewGame(request, response);
             break;
         case ("POST", "/joingame"):
             gameplay.JoinGame(request, response);
+            break;
+        case ("POST", "/attack"):
+            attack.AttackPlayer(request, response);
             break;
         default:
             router.NotFound(response);
