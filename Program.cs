@@ -15,19 +15,22 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
     e.Cancel = true;
     listen = false;
 };
-
 int port = 3000;
 HttpListener listener = new();
-listener.Prefixes.Add($"http://localhost:{port}/");
+listener.Prefixes.Add($"http://192.168.0.46:{port}/"); // lägg till din lokala ip adress om ni vill kunna koppla samman och spela från flera datorer.
 
 try
 {
     listener.Start();
-    listener.BeginGetContext(new AsyncCallback(HandleRequest), listener); //Här körs resten av kod i Async /wrapper 
+    listener.BeginGetContext(new AsyncCallback(HandleRequest), listener); // Here the rest of the code runs in the AsyncCallback
     Console.WriteLine("Server listening on port: " + port);
     while (listen)
     {
     }
+}
+catch (Exception ex)
+{
+    Console.WriteLine("Error occurred while starting the listener: " + ex.Message);
 }
 finally
 {
@@ -51,12 +54,19 @@ void Router(HttpListenerContext context)
     Attack attack = new(_db);
     GamePlay gameplay = new(_db);
     Router router = new();
+    Story story = new Story();
 
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
+        case ("GET", "/start"):
+            story.Intro(response);
+            break;
+        case ("GET", "/mission"):
+            story.Mission(response);
+            break;
         case ("GET", "/get/users"):
             user.List(response);
             break;
