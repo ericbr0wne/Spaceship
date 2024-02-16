@@ -22,15 +22,11 @@ listener.Prefixes.Add($"http://localhost:{port}/"); // lägg till din lokala ip 
 try
 {
     listener.Start();
-    listener.BeginGetContext(new AsyncCallback(HandleRequest), listener); // Here the rest of the code runs in the AsyncCallback
+    listener.BeginGetContext(new AsyncCallback(HandleRequest), listener); //Här körs resten av kod i Async /wrapper 
     Console.WriteLine("Server listening on port: " + port);
     while (listen)
     {
     }
-}
-catch (Exception ex)
-{
-    Console.WriteLine("Error occurred while starting the listener: " + ex.Message);
 }
 finally
 {
