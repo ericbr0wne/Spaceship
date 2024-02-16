@@ -17,7 +17,7 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 };
 int port = 3000;
 HttpListener listener = new();
-listener.Prefixes.Add($"http://192.168.0.46:{port}/"); // lägg till din lokala ip adress om ni vill kunna koppla samman och spela från flera datorer.
+listener.Prefixes.Add($"http://localhost:{port}/"); // lägg till din lokala ip adress om ni vill kunna koppla samman och spela från flera datorer.
 
 try
 {
@@ -55,12 +55,16 @@ void Router(HttpListenerContext context)
     GamePlay gameplay = new(_db);
     Router router = new();
     Story story = new Story();
+    HelpMenu menu = new HelpMenu();
 
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
+        case ("GET", "/help"):
+            menu.Commands(response);
+            break;
         case ("GET", "/start"):
             story.Intro(response);
             break;
@@ -70,9 +74,6 @@ void Router(HttpListenerContext context)
         case ("POST", $"/createplayer"):
             user.CreatePlayer(request, response);
             break;
-        // case ("POST", "/position"):
-        //     user.Position(request, response);
-        //     break;
         case ("POST", "/newgame"):
             gameplay.NewGame(request, response);
             break;
