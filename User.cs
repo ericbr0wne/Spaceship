@@ -106,8 +106,8 @@ public class User
         res.Close();
     }
 
-
-    public void List(HttpListenerResponse response)
+     //Denna behöver fixas eller slängas
+    public void Get(HttpListenerResponse response)
     {
 
         // curl -X GET http://localhost:3000/get/users
@@ -128,5 +128,5 @@ public class User
         response.OutputStream.Write(buffer, 0, buffer.Length);
         response.OutputStream.Close();
     }
-
+    
 }

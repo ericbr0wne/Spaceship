@@ -12,42 +12,42 @@ public class Attack
         _db = db;
 
     }
-    public void Check(HttpListenerRequest req, HttpListenerResponse res)
+    public void AttackPlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
+        //curl -s -d "game_id,attacker,E,5,attacked" -X POST http://localhost:3000/attack
 
-        //curl -s -d "1,C,4,7" -X POST http://localhost:3000/attack
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
 
         string[] split = postBody.Split(",");
-        int attacker = int.Parse(split[0]);             //you         1
-        var posLetter = split[1];                       //letter
-        int posNumber = int.Parse(split[2]);            //nbr
-        int defender = int.Parse(split[3]);             //defender    7
+        int gameId = int.Parse(split[0]);               //gameid for the attack method
+        int attacker = int.Parse(split[1]);             //attacker - player who is attacking  1
+        var posLetter = split[2];                       //letter position 
+        int posNumber = int.Parse(split[3]);            //nr position
+        int defender = int.Parse(split[4]);             //attacked - player who is getting attacked 2
 
-
-        var attackerCommand = _db.CreateCommand($"SELECT hp FROM users_hitpoints WHERE id = $1;"); //KOLLA HP PÅ DEFENDER I USERS_HITPOINTS
+        
+        var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_id = $1;"); //KOLLA HP PÅ DEFENDER I USERS_HITPOINTS
         attackerCommand.Parameters.AddWithValue(attacker);
         int attackerHp = Convert.ToInt32(attackerCommand.ExecuteScalar());
         attackerCommand.ExecuteNonQuery();
 
         if (attackerHp > 0)
         {
-
             var attackId = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLetter}' AND horizontal = {posNumber};"); //KOLLA POSITION ID
             object? attack = attackId.ExecuteScalar();
             if (attack != null && int.TryParse(attack.ToString(), out int AttackPosition))
             {
                 Console.WriteLine($"{attacker} is attacking on square: {posLetter} {posNumber} !");
-                var defenderPositionCommand = _db.CreateCommand($"SELECT mapID FROM users_x_position WHERE userID = {defender};");
+                var defenderPositionCommand = _db.CreateCommand($"SELECT position_id FROM users_x_position WHERE game_id = {gameId} AND user_id = {defender};");
                 int defencePosition = Convert.ToInt32(defenderPositionCommand.ExecuteScalar());
 
                 if (defencePosition == AttackPosition)
                 {
-                    var hitRemoveHpCommand = _db.CreateCommand($"UPDATE users_hitpoints SET hp = hp - 1 WHERE id = {defender};");
+                    var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_id = {defender} AND game_id = {gameId};");
                     hitRemoveHpCommand.ExecuteNonQuery();
 
-                    var newDefenderHp = _db.CreateCommand($"SELECT hp FROM users_hitpoints WHERE id = {defender};");
+                    var newDefenderHp = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_id = {defender} AND game_id = {gameId};");
                     object? defenderHpObject = newDefenderHp.ExecuteScalar();
                     if (defenderHpObject != null && int.TryParse(defenderHpObject.ToString(), out int defenderHp))
                     {
@@ -58,7 +58,7 @@ public class Attack
                         }
                         else
                         {
-                            Console.WriteLine("You hit the enemy and damaged his ship with 1 dmg.");
+                            Console.WriteLine("You hit the enemy and damaged the spaceship with 1 dmg.");
                         }
                     }
                     else
@@ -72,9 +72,9 @@ public class Attack
                 }
             }
         }
-
         else
         {
+            //Denna behöver fixas 
             Console.WriteLine("Game over! You got destroyed!");
             gameover = true;
             //gametable ends. You lost the game!

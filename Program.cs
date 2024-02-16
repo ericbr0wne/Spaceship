@@ -61,19 +61,17 @@ void Router(HttpListenerContext context)
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
+
         case ("GET", "/start"):
             story.Intro(response);
             break;
         case ("GET", "/mission"):
             story.Mission(response);
             break;
-        case ("GET", "/get/users"):
-            user.List(response);
-            break;
         case ("POST", "/attack"):
-            attack.Check(request, response);
+            attack.AttackPlayer(request, response);
             break;
-        case ("POST", $"/newplayer"):
+        case ("POST", $"/createplayer"):
             user.CreatePlayer(request, response);
             break;
         case ("POST", "/position"):
