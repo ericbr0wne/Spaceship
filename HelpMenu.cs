@@ -6,19 +6,33 @@ public class HelpMenu
 {
     public void Commands(HttpListenerResponse res)
     {
-        string helpMenu = "Welcome to this help menu. \n" +
-                          "To start a new game you first need to create a character.\n" +
-                          "This is the command for that just switch the name to your liking." +
-                          "curl -s -d \"eric\" -X POST http://localhost:3000/createplayer\n\n" +
-                          "To start a new game use this command and change player1 to your created player\n" +
-                          "and choose a position for your character A - C and then 1 - 3 \n" +
-                          "curl -d \"new,player1,C,7\" -X POST http://localhost:3000/newgame\n\n" +
-                          "To join an existing game use following command and enter the Id you got \n" +
-                          "from the host, enter your character name, a position between A - C and 1 - 3 \n" +
-                          "curl -d \"gameid,player2,C,2\" -X POST http://localhost:3000/joingame\n\n" +
-                          "And finally to attack use the following command and change the gameid to the id that you \n" +
-                          "got from your host, your id, the possition you want to attack and the enemy id.\n" +
-                          "curl -s -d \"gameid,attacker,E,5,defender\" -X POST http://localhost:3000/attack";
+        string helpMenu = @"
+
+    Welcome to this help menu.
+    Use the commands below to navigate in the game.
+
+
+ - CREATE CHARACTER - 
+    What name do you want for your new character.
+    curl -s -d ""PLAYERNAME"" -X POST http://localhost:3000/newplayer
+
+
+ - NEW GAME - 
+    Add your character to a map position to start a new game.
+    Avaiable positions is: A - C and 1 - 3.
+    curl -s -d ""new,PLAYERNAME,A,1"" -X POST http://localhost:3000/newgame
+
+
+ - JOIN GAME - 
+    Use the game-id you got from a friend to join a game.
+    Add your character to a map position: Avaiable positions is: A - C and 1 - 3.
+    curl -s -d ""GAMEID,PLAYERNAME,C,2"" -X POST http://localhost:3000/joingame
+
+
+ - ATTACK - 
+    To attack another player, enter the game-id, your character name,
+    the position you would like to attack (A-C,1-3) and the enemy name.                          
+    curl -s -d ""GAMEID,YOURNAME,E,5,ENEMYNAME"" -X POST http://localhost:3000/attack";
  
         byte[] buffer = Encoding.UTF8.GetBytes(helpMenu);
         res.OutputStream.Write(buffer, 0, buffer.Length);

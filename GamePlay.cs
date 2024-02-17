@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +19,8 @@ public class GamePlay
 
     public void NewGame(HttpListenerRequest req, HttpListenerResponse res)
     {
-        // curl -s -d "new,PLAYERNAME,C,7" -X POST http://localhost:3000/newgame
+
+        // curl -s -d "new,PLAYERNAME,A,1" -X POST http://localhost:3000/newgame
 
         res.ContentType = "text/plain";
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
@@ -97,12 +98,22 @@ public class GamePlay
             res.OutputStream.Close();
             res.StatusCode = (int)HttpStatusCode.Created;
         }
+        else
+        {
+            string message = $"Something went wrong!";
+
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            res.OutputStream.Write(buffer, 0, buffer.Length);
+            res.StatusCode = (int)HttpStatusCode.Created;
+            res.OutputStream.Close();
+        }
+        res.Close();
 
     }
 
     public void JoinGame(HttpListenerRequest req, HttpListenerResponse res)
     {
-        // curl -d "gameid,player2,C,2" -X POST http://localhost:3000/joingame
+        // curl -s -d "gameid,playerName,C,2" -X POST http://localhost:3000/joingame
 
         res.ContentType = "text/plain";
         StreamReader reader = new(req.InputStream, req.ContentEncoding);

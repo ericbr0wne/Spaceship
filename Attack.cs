@@ -70,6 +70,7 @@ public class Attack
                             res.OutputStream.Write(buffer, 0, buffer.Length);
                             res.OutputStream.Close();
                             res.StatusCode = (int)HttpStatusCode.Created;
+                            
                         }
                     }
                     else
