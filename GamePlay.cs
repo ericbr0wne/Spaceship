@@ -19,7 +19,6 @@ public class GamePlay
 
     public void NewGame(HttpListenerRequest req, HttpListenerResponse res)
     {
-
         // curl -s -d "new,PLAYERNAME,A,1" -X POST http://localhost:3000/newgame
 
         res.ContentType = "text/plain";
@@ -27,13 +26,16 @@ public class GamePlay
         string postBody = reader.ReadToEnd().ToLower();
         try
         {
-
             string[] split = postBody.Split(",");
+            if (split.Length > 4)
+            {
+                throw new ArgumentException("Wrong amount of arguments in request. Expected format: new,PLAYERNAME,A,1");
+            }
             string gameid = split[0];
             string playerName = split[1];
             string posLr = split[2];
             string posNr = split[3];
-
+            
 
             var getplayerNameCommand = _db.CreateCommand($"SELECT name FROM users WHERE name = '{playerName}';");
             object? p1 = getplayerNameCommand.ExecuteScalar();
@@ -120,8 +122,11 @@ public class GamePlay
         string postBody = reader.ReadToEnd().ToLower();
         try
         {
-
             string[] split = postBody.Split(",");
+            if (split.Length > 4)
+            {
+                throw new ArgumentException("Wrong amount of arguments in request. Expected format: gameid,PLAYERNAME,C,2");
+            }
             string inputgameid = split[0];
             string playerName = split[1];
             string posLr = split[2];
@@ -129,7 +134,7 @@ public class GamePlay
 
             var gameOpenCommand = _db.CreateCommand($"SELECT p2_name FROM game WHERE id = '{inputgameid}';");
             object? openslot = gameOpenCommand.ExecuteScalar();
-            if (openslot == null)
+            if (openslot == DBNull.Value)
             {
                 var getPlayerNameCommand = _db.CreateCommand($"SELECT name FROM users WHERE name = '{playerName}';");
                 object? p2 = getPlayerNameCommand.ExecuteScalar();
