@@ -15,10 +15,9 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
     e.Cancel = true;
     listen = false;
 };
-
 int port = 3000;
 HttpListener listener = new();
-listener.Prefixes.Add($"http://localhost:{port}/");
+listener.Prefixes.Add($"http://localhost:{port}/"); // lägg till din lokala ip adress om ni vill kunna koppla samman och spela från flera datorer.
 
 try
 {
@@ -33,7 +32,6 @@ finally
 {
     listener.Stop();
 }
-
 void HandleRequest(IAsyncResult result)
 {
     if (result.AsyncState is HttpListener listener)
@@ -51,31 +49,34 @@ void Router(HttpListenerContext context)
     Attack attack = new(_db);
     GamePlay gameplay = new(_db);
     Router router = new();
+    Story story = new Story();
+    HelpMenu menu = new HelpMenu();
 
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
-        /*
-        case ("GET", "/get/users"):
-            user.Get(response);
+        case ("GET", "/help"):
+            menu.Commands(response);
             break;
-        */
-        case ("POST", "/attack"):
-            attack.AttackPlayer(request, response);
+        case ("GET", "/start"):
+            story.Intro(response);
+            break;
+        case ("GET", "/mission"):
+            story.Mission(response);
             break;
         case ("POST", $"/createplayer"):
             user.CreatePlayer(request, response);
-            break;
-        case ("POST", "/position"):
-            user.Position(request, response);
             break;
         case ("POST", "/newgame"):
             gameplay.NewGame(request, response);
             break;
         case ("POST", "/joingame"):
             gameplay.JoinGame(request, response);
+            break;
+        case ("POST", "/attack"):
+            attack.AttackPlayer(request, response);
             break;
         default:
             router.NotFound(response);
