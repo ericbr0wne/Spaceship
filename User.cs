@@ -20,7 +20,7 @@ public class User
 
     public void CreatePlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
-        // curl -s -d "eric" -X POST http://localhost:3000/newplayer
+        // curl -s -d "PLAYERNAME" -X POST http://localhost:3000/newplayer
 
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string playerName = reader.ReadToEnd().ToLower();
@@ -28,6 +28,7 @@ public class User
         var nameCheck = _db.CreateCommand("Select id From users WHERE name = ($1)");
         nameCheck.Parameters.AddWithValue(playerName);
         int playerId = Convert.ToInt32(nameCheck.ExecuteScalar());
+
         if (playerId > 0 )
         {
             string message = $"Player {playerName} alredy exists";
@@ -54,7 +55,7 @@ public class User
             res.OutputStream.Close();
             res.StatusCode = (int)HttpStatusCode.Created;
         }
-
+        
         res.Close();
     }
 
