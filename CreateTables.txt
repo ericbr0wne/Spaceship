@@ -34,22 +34,22 @@ CREATE TABLE IF NOT EXISTS position(
 
 CREATE TABLE IF NOT EXISTS game(
     id SERIAL PRIMARY KEY,
-    user1_id INT REFERENCES users(id),
-    user2_id INT REFERENCES users(id),
-    win_id INT REFERENCES users(id)
+    p1_name TEXT REFERENCES users(name),
+    p2_name TEXT REFERENCES users(name),
+    game_ended BOOL DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS users_x_position(
     game_id INT REFERENCES game(id),
-    user_id INT REFERENCES users(id),
+    user_name TEXT REFERENCES users(name),
     position_id INT REFERENCES position(id)
 );
 
 CREATE TABLE IF NOT EXISTS user_hitpoints(
     game_id INT REFERENCES game(id),
-    user_id INT REFERENCES users(id),
+    user_name TEXT REFERENCES users(name),
     hp INT NOT NULL DEFAULT 3,
-    PRIMARY KEY (game_id, user_id)
+    PRIMARY KEY (game_id, user_name)
 );
 
 INSERT INTO position (vertical, horizontal) VALUES
