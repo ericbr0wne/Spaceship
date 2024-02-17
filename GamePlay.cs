@@ -25,63 +25,73 @@ public class GamePlay
         res.ContentType = "text/plain";
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
-
-        string[] split = postBody.Split(",");
-        string gameid = split[0];
-        string playerName = split[1];
-        string posLr = split[2];
-        string posNr = split[3];
-
-
-        var getplayerNameCommand = _db.CreateCommand($"SELECT name FROM users WHERE name = '{playerName}';");
-        object? p1 = getplayerNameCommand.ExecuteScalar();
-
-        if (p1 != null)
+        try
         {
-            var getPositionCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLr}' AND horizontal = {posNr};");
-            object? posIdObject = getPositionCommand.ExecuteScalar();
 
-            if (posIdObject != null && int.TryParse(posIdObject.ToString(), out int positionId))
+            string[] split = postBody.Split(",");
+            string gameid = split[0];
+            string playerName = split[1];
+            string posLr = split[2];
+            string posNr = split[3];
+
+
+            var getplayerNameCommand = _db.CreateCommand($"SELECT name FROM users WHERE name = '{playerName}';");
+            object? p1 = getplayerNameCommand.ExecuteScalar();
+
+            if (p1 != null)
             {
-                if (gameid == "new")
+                var getPositionCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLr}' AND horizontal = {posNr};");
+                object? posIdObject = getPositionCommand.ExecuteScalar();
+
+                if (posIdObject != null && int.TryParse(posIdObject.ToString(), out int positionId))
                 {
-                    var gameInsertCommand = _db.CreateCommand("INSERT INTO game (p1_name) VALUES ($1) RETURNING id;");
-                    gameInsertCommand.Parameters.AddWithValue(p1);
+                    if (gameid == "new")
+                    {
+                        var gameInsertCommand = _db.CreateCommand("INSERT INTO game (p1_name) VALUES ($1) RETURNING id;");
+                        gameInsertCommand.Parameters.AddWithValue(p1);
 
-                    int newGameId = Convert.ToInt32(gameInsertCommand.ExecuteScalar());
+                        int newGameId = Convert.ToInt32(gameInsertCommand.ExecuteScalar());
 
-                    var posInsertCommand = _db.CreateCommand("INSERT INTO users_x_position (game_id, user_name, position_id) VALUES ($1, $2, $3);");
-                    posInsertCommand.Parameters.AddWithValue(newGameId);
-                    posInsertCommand.Parameters.AddWithValue(p1);
-                    posInsertCommand.Parameters.AddWithValue(positionId);
-                    posInsertCommand.ExecuteNonQuery();
+                        var posInsertCommand = _db.CreateCommand("INSERT INTO users_x_position (game_id, user_name, position_id) VALUES ($1, $2, $3);");
+                        posInsertCommand.Parameters.AddWithValue(newGameId);
+                        posInsertCommand.Parameters.AddWithValue(p1);
+                        posInsertCommand.Parameters.AddWithValue(positionId);
+                        posInsertCommand.ExecuteNonQuery();
 
-                    var insertHitpointsCmd = _db.CreateCommand("INSERT INTO user_hitpoints (game_id, user_name) VALUES ($1, $2);");
-                    insertHitpointsCmd.Parameters.AddWithValue(newGameId);
-                    insertHitpointsCmd.Parameters.AddWithValue(p1);
-                    insertHitpointsCmd.ExecuteNonQuery();
+                        var insertHitpointsCmd = _db.CreateCommand("INSERT INTO user_hitpoints (game_id, user_name) VALUES ($1, $2);");
+                        insertHitpointsCmd.Parameters.AddWithValue(newGameId);
+                        insertHitpointsCmd.Parameters.AddWithValue(p1);
+                        insertHitpointsCmd.ExecuteNonQuery();
 
-                    string message = $"{p1} created a new game. REMEMBER THIS GAME-ID: {newGameId} ";
+                        string message = $"{p1} created a new game. REMEMBER THIS GAME-ID: {newGameId} ";
 
-                    byte[] buffer = Encoding.UTF8.GetBytes(message);
-                    res.OutputStream.Write(buffer, 0, buffer.Length);
-                    res.StatusCode = (int)HttpStatusCode.Created;
-                    res.OutputStream.Close();
+                        byte[] buffer = Encoding.UTF8.GetBytes(message);
+                        res.OutputStream.Write(buffer, 0, buffer.Length);
+                        res.StatusCode = (int)HttpStatusCode.Created;
+                        res.OutputStream.Close();
+                    }
+                    else
+                    {
+                        string message = "Type new as gameId";
+                        byte[] buffer = Encoding.UTF8.GetBytes(message);
+                        res.OutputStream.Write(buffer, 0, buffer.Length);
+                        res.OutputStream.Close();
+                        res.StatusCode = (int)HttpStatusCode.Created;
+                    }
                 }
                 else
                 {
-                    string message = "Type new as gameId";
-                    res.ContentType = "text/plain";
+                    string message = "This map location does not exist. Try A-C and 1-3!";
                     byte[] buffer = Encoding.UTF8.GetBytes(message);
                     res.OutputStream.Write(buffer, 0, buffer.Length);
                     res.OutputStream.Close();
                     res.StatusCode = (int)HttpStatusCode.Created;
                 }
+
             }
             else
             {
-                string message = "This map location does not exist. Try A-C and 1-3!";
-                res.ContentType = "text/plain";
+                string message = "A player with this name does not exist!";
                 byte[] buffer = Encoding.UTF8.GetBytes(message);
                 res.OutputStream.Write(buffer, 0, buffer.Length);
                 res.OutputStream.Close();
@@ -89,19 +99,9 @@ public class GamePlay
             }
 
         }
-        else
+        catch (Exception)
         {
-            string message = "A player with this name does not exist!";
-            res.ContentType = "text/plain";
-            byte[] buffer = Encoding.UTF8.GetBytes(message);
-            res.OutputStream.Write(buffer, 0, buffer.Length);
-            res.OutputStream.Close();
-            res.StatusCode = (int)HttpStatusCode.Created;
-        }
-        else
-        {
-            string message = $"Something went wrong!";
-
+            string message = @"wrong game input! Use this format: ""new,PLAYERNAME,A,1""";
             byte[] buffer = Encoding.UTF8.GetBytes(message);
             res.OutputStream.Write(buffer, 0, buffer.Length);
             res.StatusCode = (int)HttpStatusCode.Created;
@@ -113,60 +113,102 @@ public class GamePlay
 
     public void JoinGame(HttpListenerRequest req, HttpListenerResponse res)
     {
-        // curl -s -d "gameid,playerName,C,2" -X POST http://localhost:3000/joingame
+        // curl -s -d "gameid,PLAYERNAME,C,2" -X POST http://localhost:3000/joingame
 
         res.ContentType = "text/plain";
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
-
-        string[] split = postBody.Split(",");
-        int gameid = int.Parse(split[0]);
-        string playerName = split[1];
-        string posLr = split[2];
-        string posNr = split[3];
-
-
-        var getUserIdCommand = _db.CreateCommand($"SELECT id FROM users WHERE name = '{playerName}';");
-        int userId = Convert.ToInt32(getUserIdCommand.ExecuteScalar());
-
-        var getPositionCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLr}' AND horizontal = {posNr};");
-        object? posIdObject = getPositionCommand.ExecuteScalar();
-
-        if (posIdObject != null && int.TryParse(posIdObject.ToString(), out int positionId))
+        try
         {
-            if (gameid > 0)
+
+            string[] split = postBody.Split(",");
+            string inputgameid = split[0];
+            string playerName = split[1];
+            string posLr = split[2];
+            string posNr = split[3];
+
+            var gameOpenCommand = _db.CreateCommand($"SELECT p2_name FROM game WHERE id = '{inputgameid}';");
+            object? openslot = gameOpenCommand.ExecuteScalar();
+            if (openslot == null)
             {
-                var gameInsertCommand = _db.CreateCommand("UPDATE game SET user2_id = $1 WHERE id = $2");
-                gameInsertCommand.Parameters.AddWithValue(userId);
-                gameInsertCommand.Parameters.AddWithValue(gameid);
-                gameInsertCommand.ExecuteNonQuery();
+                var getPlayerNameCommand = _db.CreateCommand($"SELECT name FROM users WHERE name = '{playerName}';");
+                object? p2 = getPlayerNameCommand.ExecuteScalar();
+                if (p2 != null)
+                {
+                    var getPositionCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLr}' AND horizontal = {posNr};");
+                    object? posIdObject = getPositionCommand.ExecuteScalar();
 
-                var posInsertCommand = _db.CreateCommand("INSERT INTO users_x_position (game_id, user_id, position_id) VALUES ($1, $2, $3);");
-                posInsertCommand.Parameters.AddWithValue(gameid);
-                posInsertCommand.Parameters.AddWithValue(userId);
-                posInsertCommand.Parameters.AddWithValue(positionId);
-                posInsertCommand.ExecuteNonQuery();
+                    if (posIdObject != null && int.TryParse(posIdObject.ToString(), out int positionId))
+                    {
+                        if (int.TryParse(inputgameid.ToString(), out int gameid) && gameid > 0)
+                        {
+                            var gameInsertCommand = _db.CreateCommand("UPDATE game SET p2_name = $1 WHERE id = $2");
+                            gameInsertCommand.Parameters.AddWithValue(p2);
+                            gameInsertCommand.Parameters.AddWithValue(gameid);
+                            gameInsertCommand.ExecuteNonQuery();
 
-                var insertHitpointsCmd = _db.CreateCommand("INSERT INTO user_hitpoints (game_id, user_id) VALUES ($1, $2);");
-                insertHitpointsCmd.Parameters.AddWithValue(gameid);
-                insertHitpointsCmd.Parameters.AddWithValue(userId);
-                insertHitpointsCmd.ExecuteNonQuery();
+                            var posInsertCommand = _db.CreateCommand("INSERT INTO users_x_position (game_id, user_name, position_id) VALUES ($1, $2, $3);");
+                            posInsertCommand.Parameters.AddWithValue(gameid);
+                            posInsertCommand.Parameters.AddWithValue(p2);
+                            posInsertCommand.Parameters.AddWithValue(positionId);
+                            posInsertCommand.ExecuteNonQuery();
 
-                string message = $"{playerName} joined game {gameid} and placed position {positionId}";
+                            var insertHitpointsCmd = _db.CreateCommand("INSERT INTO user_hitpoints (game_id, user_name) VALUES ($1, $2);");
+                            insertHitpointsCmd.Parameters.AddWithValue(gameid);
+                            insertHitpointsCmd.Parameters.AddWithValue(p2);
+                            insertHitpointsCmd.ExecuteNonQuery();
 
-                byte[] buffer = Encoding.UTF8.GetBytes(message);
-                res.OutputStream.Write(buffer, 0, buffer.Length);
-                res.StatusCode = (int)HttpStatusCode.Created;
-                res.OutputStream.Close();
+                            string message = $"{p2} Joined the game.";
+                            byte[] buffer = Encoding.UTF8.GetBytes(message);
+                            res.OutputStream.Write(buffer, 0, buffer.Length);
+                            res.StatusCode = (int)HttpStatusCode.Created;
+                            res.OutputStream.Close();
+                        }
+
+                        else
+                        {
+                            string message = $"GameId is does not exist";
+                            byte[] buffer = Encoding.UTF8.GetBytes(message);
+                            res.OutputStream.Write(buffer, 0, buffer.Length);
+                            res.StatusCode = (int)HttpStatusCode.Created;
+                            res.OutputStream.Close();
+                        }
+                    }
+                    else
+                    {
+                        string message = "This map location does not exist. Try A-C and 1-3!";
+                        byte[] buffer = Encoding.UTF8.GetBytes(message);
+                        res.OutputStream.Write(buffer, 0, buffer.Length);
+                        res.OutputStream.Close();
+                        res.StatusCode = (int)HttpStatusCode.Created;
+                    }
+                }
+                else
+                {
+                    string message = "A player with this name does not exist!";
+                    byte[] buffer = Encoding.UTF8.GetBytes(message);
+                    res.OutputStream.Write(buffer, 0, buffer.Length);
+                    res.StatusCode = (int)HttpStatusCode.Created;
+                    res.OutputStream.Close();
+                }
             }
             else
             {
-                string message = $"GameId is does not exist";
+                string message = "Game full!";
                 byte[] buffer = Encoding.UTF8.GetBytes(message);
                 res.OutputStream.Write(buffer, 0, buffer.Length);
                 res.StatusCode = (int)HttpStatusCode.Created;
                 res.OutputStream.Close();
             }
         }
+        catch (Exception)
+        {
+            string message = @"wrong game input! Use this format: ""gameid,PLAYERNAME,C,2""";
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            res.OutputStream.Write(buffer, 0, buffer.Length);
+            res.StatusCode = (int)HttpStatusCode.Created;
+            res.OutputStream.Close();
+        }
+        res.Close();
     }
 }
