@@ -1,5 +1,6 @@
 ﻿using Npgsql;
 using System.Net;
+using System.Text;
 
 namespace Spaceship;
 
@@ -53,12 +54,22 @@ public class Attack
                     {
                         if (defenderHp == 0)
                         {
-                            Console.WriteLine("KABOOOOM! You destroyed the enemy");
+                            string message ="KABOOOOM! You destroyed the enemy";
+                            res.ContentType = "text/plain";
+                            byte[] buffer = Encoding.UTF8.GetBytes(message);
+                            res.OutputStream.Write(buffer, 0, buffer.Length);
+                            res.OutputStream.Close();
+                            res.StatusCode = (int)HttpStatusCode.Created;
                             //win_id
                         }
                         else
                         {
-                            Console.WriteLine("You hit the enemy and damaged the spaceship with 1 dmg.");
+                            string message = "You hit the enemy and damaged the spaceship with 1 dmg.";
+                            res.ContentType = "text/plain";
+                            byte[] buffer = Encoding.UTF8.GetBytes(message);
+                            res.OutputStream.Write(buffer, 0, buffer.Length);
+                            res.OutputStream.Close();
+                            res.StatusCode = (int)HttpStatusCode.Created;
                         }
                     }
                     else
@@ -68,14 +79,25 @@ public class Attack
                 }
                 else
                 {
-                    Console.WriteLine($"You missed the target!");
+                    string message = "You missed the target!";
+                    res.ContentType = "text/plain";
+                    byte[] buffer = Encoding.UTF8.GetBytes(message);
+                    res.OutputStream.Write(buffer, 0, buffer.Length);
+                    res.OutputStream.Close();
+                    res.StatusCode = (int)HttpStatusCode.Created;
                 }
             }
         }
         else
         {
             //Denna behöver fixas 
-            Console.WriteLine("Game over! You got destroyed!");
+            string message = "Game over! You got destroyed!";
+            res.ContentType = "text/plain";
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            res.OutputStream.Write(buffer, 0, buffer.Length);
+            res.OutputStream.Close();
+            res.StatusCode = (int)HttpStatusCode.Created;
+            
             gameover = true;
             //gametable ends. You lost the game!
         }
