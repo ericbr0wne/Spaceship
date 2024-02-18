@@ -134,7 +134,6 @@ public class Attack
 
         res.Close();
     }
-
     public void UpdateWins(string playerName)
     {
         using (var cmd = _db.CreateCommand("UPDATE users SET wins = wins + 1 WHERE name = @playerName"))
