@@ -22,18 +22,29 @@ public class Attack
         string postBody = reader.ReadToEnd().ToLower();
 
         string[] split = postBody.Split(",");
-        int gameId = int.Parse(split[0]);               //gameid for the attack method
-        int attacker = int.Parse(split[1]);             //attacker - player who is attacking  1
-        var posLetter = split[2];                       //letter position 
-        int posNumber = int.Parse(split[3]);            //nr position
-        int defender = int.Parse(split[4]);             //attacked - player who is getting attacked 2
+        int gameId = int.Parse(split[0]);                                    //gameid for the attack method
+        string attacker = split[1];                                       //attacker - player who is attacking  1
+        var posLetter = split[2];                                //letter position 
+        int posNumber;                                               //nr position
+        bool isNumber = int.TryParse(split[3], out posNumber);
+        string defender = split[4];                              //attacked - player who is getting attacked 2
+        
+        if (!"abc".Contains(posLetter) || !isNumber || posNumber < 1 || posNumber > 3)
+        {
+            string message = "Invalid input. Please use the following format 'gameId,attacker,a-c,1-3,defender'. Try again.";
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            res.OutputStream.Write(buffer, 0, buffer.Length);
+            res.StatusCode = (int)HttpStatusCode.BadRequest;
+            res.OutputStream.Close();
+            return;
+        }
 
         
-        var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_id = $1;"); //KOLLA HP PÅ DEFENDER I USERS_HITPOINTS
+        var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = $1;"); //KOLLA HP PÅ DEFENDER I USERS_HITPOINTS
         attackerCommand.Parameters.AddWithValue(attacker);
         int attackerHp = Convert.ToInt32(attackerCommand.ExecuteScalar());
         attackerCommand.ExecuteNonQuery();
-
+        
         if (attackerHp > 0)
         {
             var attackId = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLetter}' AND horizontal = {posNumber};"); //KOLLA POSITION ID
@@ -41,15 +52,25 @@ public class Attack
             if (attack != null && int.TryParse(attack.ToString(), out int AttackPosition))
             {
                 Console.WriteLine($"{attacker} is attacking on square: {posLetter} {posNumber} !");
-                var defenderPositionCommand = _db.CreateCommand($"SELECT position_id FROM users_x_position WHERE game_id = {gameId} AND user_id = {defender};");
+                var defenderPositionCommand = _db.CreateCommand($"SELECT position_id FROM users_x_position WHERE game_id = {gameId} AND user_name = '{defender}';");
                 int defencePosition = Convert.ToInt32(defenderPositionCommand.ExecuteScalar());
+                
+                var insertAttackedPositionCommand = _db.CreateCommand("INSERT INTO attacked_positions (game_id, user_name, position_id) VALUES ($1, $2, $3);");
+                insertAttackedPositionCommand.Parameters.AddWithValue(gameId);
+                insertAttackedPositionCommand.Parameters.AddWithValue(attacker);
+                insertAttackedPositionCommand.Parameters.AddWithValue(AttackPosition);
+                insertAttackedPositionCommand.ExecuteNonQuery();
+                
+                string map = _updateMap.GetMap(gameId, attacker);
+                byte[] buffer2 = Encoding.UTF8.GetBytes(map);
+                res.OutputStream.Write(buffer2, 0, buffer2.Length);
+
 
                 if (defencePosition == AttackPosition)
                 {
-                    var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_id = {defender} AND game_id = {gameId};");
+                    var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_name = '{defender}' AND game_id = {gameId};");
                     hitRemoveHpCommand.ExecuteNonQuery();
-
-                    var newDefenderHp = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_id = {defender} AND game_id = {gameId};");
+                    var newDefenderHp = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = '{defender}' AND game_id = {gameId};");
                     object? defenderHpObject = newDefenderHp.ExecuteScalar();
                     if (defenderHpObject != null && int.TryParse(defenderHpObject.ToString(), out int defenderHp))
                     {

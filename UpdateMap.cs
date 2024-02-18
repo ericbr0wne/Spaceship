@@ -11,10 +11,9 @@ public class UpdateMap
         _db = db;
     }
     
-    public string GetMap(int gameId)
+    public string GetMap(int gameId, string playerName)
     {
         string[,] map = new string[3, 3];
-        // Fetch player positions
         var playerPositionsCommand = _db.CreateCommand("SELECT user_name, position_id FROM users_x_position WHERE game_id = @gameId");
         playerPositionsCommand.Parameters.AddWithValue("gameId", gameId);
         var reader = playerPositionsCommand.ExecuteReader();
@@ -27,23 +26,42 @@ public class UpdateMap
 
             int row = (positionId - 1) / 3;
             int col = (positionId - 1) % 3;
-            
-            map[row, col] = userName;
+
+            if (userName == playerName)
+            {
+                map[row, col] = userName;
+            }
         }
 
-        // var attackPositionsCommand = _db.CreateCommand("SELECT user_name, position_id FROM attack_positions WHERE game_id = @gameId");
-        // attackPositionsCommand.Parameters.AddWithValue("gameId", gameId);
-        // var attackPositions = attackPositionsCommand.ExecuteReader();
+        var attackedPositionsCommand = _db.CreateCommand("SELECT position_id FROM attacked_positions WHERE game_id = @gameId AND user_name = @userName");
+        attackedPositionsCommand.Parameters.AddWithValue("gameId", gameId);
+        attackedPositionsCommand.Parameters.AddWithValue("userName", playerName);
+        var attackedReader = attackedPositionsCommand.ExecuteReader();
 
-// Fill in player positions and attack positions
-// ...
+        while (attackedReader.Read())
+        {
+            int attackedPositionId = attackedReader.GetInt32(0);
 
+            int row = (attackedPositionId - 1) / 3;
+            int col = (attackedPositionId - 1) % 3;
+
+            if (map[row, col] == null)
+            {
+                map[row, col] = "X";
+            }
+        }
+        
         var mapString = new StringBuilder();
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < 3; j++)
             {
-                mapString.Append(map[i, j] ?? "0").Append(" ");
+                string cell = map[i, j] ?? "O";
+                if (cell.Length > 6)
+                {
+                    cell = cell.Substring(0, 6);
+                }
+                mapString.Append(cell.PadRight(6)).Append(" ");
             }
             mapString.AppendLine();
         }
