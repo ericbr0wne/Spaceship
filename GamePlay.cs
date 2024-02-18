@@ -123,7 +123,7 @@ public class GamePlay
         try
         {
             string[] split = postBody.Split(",");
-            if (split.Length > 4)
+            if (split.Length != 4)
             {
                 throw new ArgumentException("Wrong amount of arguments in request. Expected format: gameid,PLAYERNAME,C,2");
             }
