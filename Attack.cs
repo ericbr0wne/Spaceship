@@ -49,7 +49,6 @@ public class Attack
             
             var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = $1;"); //KOLLA HP PÅ DEFENDER I USERS_HITPOINTS
             attackerCommand.Parameters.AddWithValue(attacker);
-
             int attackerHp = Convert.ToInt32(attackerCommand.ExecuteScalar());
             attackerCommand.ExecuteNonQuery();
 
