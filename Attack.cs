@@ -1,7 +1,6 @@
 ﻿using Npgsql;
 using System.Net;
 using System.Text;
-
 namespace Spaceship;
 
 public class Attack
@@ -68,7 +67,6 @@ public class Attack
                     {
                         var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_name = '{defender}' AND game_id = {gameId};");
                         hitRemoveHpCommand.ExecuteNonQuery();
-
                         var newDefenderHp = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = '{defender}' AND game_id = {gameId};");
                         object? defenderHpObject = newDefenderHp.ExecuteScalar();
                         if (defenderHpObject != null && int.TryParse(defenderHpObject.ToString(), out int defenderHp))
@@ -84,7 +82,6 @@ public class Attack
                                 
                                 UpdateWins(attacker);
                                 EndGame(gameId);
-                                
                             }
                             else
                             {
@@ -136,7 +133,6 @@ public class Attack
                 res.StatusCode = (int)HttpStatusCode.Created;
 
                 gameover = true;
-                //gametable ends. You lost the game!
             }
         }
         catch (Exception)
