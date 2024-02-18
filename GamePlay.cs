@@ -11,9 +11,11 @@ namespace Spaceship;
 public class GamePlay
 {
     private readonly NpgsqlDataSource _db;
+    private UpdateMap _updateMap;
     public GamePlay(NpgsqlDataSource db)
     {
         _db = db;
+        _updateMap = new UpdateMap(db);
     }
 
 
@@ -62,9 +64,10 @@ public class GamePlay
                         insertHitpointsCmd.Parameters.AddWithValue(newGameId);
                         insertHitpointsCmd.Parameters.AddWithValue(p1);
                         insertHitpointsCmd.ExecuteNonQuery();
-
-                        string message = $"{p1} created a new game. REMEMBER THIS GAME-ID: {newGameId} ";
-
+                        
+                        string map = _updateMap.GetMap(newGameId);
+                        
+                        string message = $"{p1} created a new game. REMEMBER THIS GAME-ID: {newGameId}\nHere is the current map: \n{map} ";
                         byte[] buffer = Encoding.UTF8.GetBytes(message);
                         res.OutputStream.Write(buffer, 0, buffer.Length);
                         res.StatusCode = (int)HttpStatusCode.Created;
@@ -129,7 +132,7 @@ public class GamePlay
 
             var gameOpenCommand = _db.CreateCommand($"SELECT p2_name FROM game WHERE id = '{inputgameid}';");
             object? openslot = gameOpenCommand.ExecuteScalar();
-            if (openslot == null)
+            if (openslot == DBNull.Value)
             {
                 var getPlayerNameCommand = _db.CreateCommand($"SELECT name FROM users WHERE name = '{playerName}';");
                 object? p2 = getPlayerNameCommand.ExecuteScalar();
@@ -157,8 +160,10 @@ public class GamePlay
                             insertHitpointsCmd.Parameters.AddWithValue(gameid);
                             insertHitpointsCmd.Parameters.AddWithValue(p2);
                             insertHitpointsCmd.ExecuteNonQuery();
+                            
+                            string map = _updateMap.GetMap(gameid);
 
-                            string message = $"{p2} Joined the game.";
+                            string message = $"{p2} Joined the game.\nHere is the current map:\n{map}";
                             byte[] buffer = Encoding.UTF8.GetBytes(message);
                             res.OutputStream.Write(buffer, 0, buffer.Length);
                             res.StatusCode = (int)HttpStatusCode.Created;

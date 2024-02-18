@@ -7,11 +7,12 @@ namespace Spaceship;
 public class Attack
 {
     private NpgsqlDataSource _db;
+    private UpdateMap _updateMap;
     bool gameover = false;
     public Attack(NpgsqlDataSource db)
     {
         _db = db;
-
+        _updateMap = new UpdateMap(db);
     }
     public void AttackPlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
