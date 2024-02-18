@@ -23,7 +23,7 @@ public class Attack
         try
         {
             string[] split = postBody.Split(",");
-            if (split.Length > 5)
+            if (split.Length != 5)
             {
                 throw new ArgumentException("Wrong amount of arguments in request. Expected format: game_id,attacker,E,5,attacked");
             }
