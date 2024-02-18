@@ -66,6 +66,8 @@ public class Attack
                                 res.OutputStream.Write(buffer, 0, buffer.Length);
                                 res.OutputStream.Close();
                                 res.StatusCode = (int)HttpStatusCode.Created;
+                                
+                                UpdateWins(attacker);
                                 //win_id
                             }
                             else
@@ -131,5 +133,14 @@ public class Attack
         }
 
         res.Close();
+    }
+
+    public void UpdateWins(string playerName)
+    {
+        using (var cmd = _db.CreateCommand("UPDATE users SET wins = wins + 1 WHERE name = @playerName"))
+        {
+            cmd.Parameters.AddWithValue("playerName", playerName);
+            cmd.ExecuteNonQuery();
+        }
     }
 }
