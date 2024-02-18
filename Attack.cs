@@ -1,14 +1,11 @@
-﻿using Npgsql;
+using Npgsql;
 using System.Net;
 using System.Text;
-
 namespace Spaceship;
 
 public class Attack
 {
     private NpgsqlDataSource _db;
-    bool gameover = false;
-
     public Attack(NpgsqlDataSource db)
     {
         _db = db;
@@ -27,21 +24,20 @@ public class Attack
             {
                 throw new ArgumentException("Wrong amount of arguments in request. Expected format: game_id,attacker,E,5,attacked");
             }
-            int gameId = int.Parse(split[0]);       //gameid for the attack method
-            string attacker = split[1];     //attacker - player who is attacking  1
-            var posLetter = split[2];         //letter position 
-            int posNumber = int.Parse(split[3]);    //nr position
-            string defender = split[4];     //attacked - player who is getting attacked 2
-
-            var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = $1;"); //KOLLA HP PÅ DEFENDER I USERS_HITPOINTS
+            int gameId = int.Parse(split[0]);      
+            string attacker = split[1];    
+            var posLetter = split[2];         
+            int posNumber = int.Parse(split[3]);    
+            string defender = split[4];    
+          
+            var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = $1;"); 
             attackerCommand.Parameters.AddWithValue(attacker);
-
             int attackerHp = Convert.ToInt32(attackerCommand.ExecuteScalar());
             attackerCommand.ExecuteNonQuery();
 
             if (attackerHp > 0)
             {
-                var attackId = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLetter}' AND horizontal = {posNumber};"); //KOLLA POSITION ID
+                var attackId = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLetter}' AND horizontal = {posNumber};"); 
                 object? attack = attackId.ExecuteScalar();
                 if (attack != null && int.TryParse(attack.ToString(), out int AttackPosition))
                 {
@@ -53,7 +49,6 @@ public class Attack
                     {
                         var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_name = '{defender}' AND game_id = {gameId};");
                         hitRemoveHpCommand.ExecuteNonQuery();
-
                         var newDefenderHp = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = '{defender}' AND game_id = {gameId};");
                         object? defenderHpObject = newDefenderHp.ExecuteScalar();
                         if (defenderHpObject != null && int.TryParse(defenderHpObject.ToString(), out int defenderHp))
@@ -66,9 +61,8 @@ public class Attack
                                 res.OutputStream.Write(buffer, 0, buffer.Length);
                                 res.OutputStream.Close();
                                 res.StatusCode = (int)HttpStatusCode.Created;
-                                
                                 UpdateWins(attacker);
-                                //win_id
+                                EndGame(gameId);
                             }
                             else
                             {
@@ -118,9 +112,6 @@ public class Attack
                 res.OutputStream.Write(buffer, 0, buffer.Length);
                 res.OutputStream.Close();
                 res.StatusCode = (int)HttpStatusCode.Created;
-
-                gameover = true;
-                //gametable ends. You lost the game!
             }
         }
         catch (Exception)
@@ -139,6 +130,15 @@ public class Attack
         using (var cmd = _db.CreateCommand("UPDATE users SET wins = wins + 1 WHERE name = @playerName"))
         {
             cmd.Parameters.AddWithValue("playerName", playerName);
+            cmd.ExecuteNonQuery();
+        }
+    }   
+  
+    public void EndGame(int gameId)
+    {
+        using (var cmd = _db.CreateCommand("UPDATE game SET game_ended = true WHERE id = @gameId"))
+        {
+            cmd.Parameters.AddWithValue("gameId", gameId);
             cmd.ExecuteNonQuery();
         }
     }
