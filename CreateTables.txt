@@ -1,5 +1,5 @@
 drop table if exists user_hitpoints;
-drop table if exists users_x_position;
+drop table if exists user_x_position;
 drop table if exists game;
 
 DO $$
@@ -14,7 +14,7 @@ BEGIN
         TRUNCATE TABLE users RESTART IDENTITY;
     EXCEPTION
         WHEN undefined_table THEN
-    END;
+    END;    
 END $$;
 
 

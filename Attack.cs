@@ -1,108 +1,157 @@
-﻿using Npgsql;
+using Npgsql;
 using System.Net;
 using System.Text;
-
 namespace Spaceship;
 
 public class Attack
 {
     private NpgsqlDataSource _db;
     private UpdateMap _updateMap;
-    bool gameover = false;
     public Attack(NpgsqlDataSource db)
     {
         _db = db;
         _updateMap = new UpdateMap(db);
+
     }
+
     public void AttackPlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
-        //curl -s -d "game_id,attacker,E,5,attacked" -X POST http://localhost:3000/attack
+        //curl -s -d "game_id,attacker,A,1,defender" -X POST http://localhost:3000/attack
 
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
-
         string[] split = postBody.Split(",");
-        int gameId = int.Parse(split[0]);                                    //gameid for the attack method
-        string attacker = split[1];                                       //attacker - player who is attacking  1
-        var posLetter = split[2];                                //letter position 
-        int posNumber;                                               //nr position
+
+        int gameId = int.Parse(split[0]);
+        string attacker = split[1];
+        var posLetter = split[2];
+        int posNumber;
         bool isNumber = int.TryParse(split[3], out posNumber);
-        string defender = split[4];                              //attacked - player who is getting attacked 2
-        
-        if (!"abc".Contains(posLetter) || !isNumber || posNumber < 1 || posNumber > 3)
+        string defender = split[4];
+        if (attacker.ToString() != defender.ToString())
         {
-            string message = "Invalid input. Please use the following format 'gameId,attacker,a-c,1-3,defender'. Try again.";
-            byte[] buffer = Encoding.UTF8.GetBytes(message);
-            res.OutputStream.Write(buffer, 0, buffer.Length);
-            res.StatusCode = (int)HttpStatusCode.BadRequest;
-            res.OutputStream.Close();
-            return;
-        }
-
-        
-        var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = $1;"); //KOLLA HP PÅ DEFENDER I USERS_HITPOINTS
-        attackerCommand.Parameters.AddWithValue(attacker);
-        int attackerHp = Convert.ToInt32(attackerCommand.ExecuteScalar());
-        attackerCommand.ExecuteNonQuery();
-        
-        if (attackerHp > 0)
-        {
-            var attackId = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLetter}' AND horizontal = {posNumber};"); //KOLLA POSITION ID
-            object? attack = attackId.ExecuteScalar();
-            if (attack != null && int.TryParse(attack.ToString(), out int AttackPosition))
+            if (split.Length == 5)
             {
-                Console.WriteLine($"{attacker} is attacking on square: {posLetter} {posNumber} !");
-                var defenderPositionCommand = _db.CreateCommand($"SELECT position_id FROM users_x_position WHERE game_id = {gameId} AND user_name = '{defender}';");
-                int defencePosition = Convert.ToInt32(defenderPositionCommand.ExecuteScalar());
-                
-                var insertAttackedPositionCommand = _db.CreateCommand("INSERT INTO attacked_positions (game_id, user_name, position_id) VALUES ($1, $2, $3);");
-                insertAttackedPositionCommand.Parameters.AddWithValue(gameId);
-                insertAttackedPositionCommand.Parameters.AddWithValue(attacker);
-                insertAttackedPositionCommand.Parameters.AddWithValue(AttackPosition);
-                insertAttackedPositionCommand.ExecuteNonQuery();
-                
-                string map = _updateMap.GetMap(gameId, attacker);
-                byte[] buffer2 = Encoding.UTF8.GetBytes(map);
-                res.OutputStream.Write(buffer2, 0, buffer2.Length);
+                var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = @Attacker AND game_id = @game_id;");
+                attackerCommand.Parameters.AddWithValue("@Attacker", attacker);
+                attackerCommand.Parameters.AddWithValue("@game_id", gameId);
+                int attackerHp = Convert.ToInt32(attackerCommand.ExecuteScalar());
 
-
-                if (defencePosition == AttackPosition)
+                if (attackerHp > 0)
                 {
-                    var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_name = '{defender}' AND game_id = {gameId};");
-                    hitRemoveHpCommand.ExecuteNonQuery();
-                    var newDefenderHp = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = '{defender}' AND game_id = {gameId};");
-                    object? defenderHpObject = newDefenderHp.ExecuteScalar();
-                    if (defenderHpObject != null && int.TryParse(defenderHpObject.ToString(), out int defenderHp))
+                    var findAttacker = _db.CreateCommand("SELECT id FROM users WHERE name = @Attacker");
+                    findAttacker.Parameters.AddWithValue("@Attacker", attacker);
+                    int atk = Convert.ToInt32(findAttacker.ExecuteScalar());
+
+                    var findDefender = _db.CreateCommand($"SELECT id FROM users WHERE name = @defender;");
+                    findDefender.Parameters.AddWithValue("@defender", defender);
+                    int def = Convert.ToInt32(findDefender.ExecuteScalar());
+
+                    if (def > 0 && atk > 0)
                     {
-                        if (defenderHp == 0)
+                        var defenderPositionCommand = _db.CreateCommand($"SELECT position_id FROM user_x_position WHERE game_id = {gameId} AND user_name <> '{attacker}' AND user_name = '{defender}';");
+                        int defencePosition = Convert.ToInt32(defenderPositionCommand.ExecuteScalar());
+
+                        var attackId = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLetter}' AND horizontal = {posNumber};");
+                        object? attack = attackId.ExecuteScalar();
+
+                        if (attack != null && int.TryParse(attack.ToString(), out int AttackPosition))
                         {
-                            string message ="KABOOOOM! You destroyed the enemy";
-                            res.ContentType = "text/plain";
-                            byte[] buffer = Encoding.UTF8.GetBytes(message);
-                            res.OutputStream.Write(buffer, 0, buffer.Length);
-                            res.OutputStream.Close();
-                            res.StatusCode = (int)HttpStatusCode.Created;
-                            //win_id
+                            var insertAttackedPositionCommand = _db.CreateCommand("INSERT INTO attacked_positions (game_id, user_name, position_id) VALUES ($1, $2, $3);");
+                            insertAttackedPositionCommand.Parameters.AddWithValue(gameId);
+                            insertAttackedPositionCommand.Parameters.AddWithValue(attacker);
+                            insertAttackedPositionCommand.Parameters.AddWithValue(AttackPosition);
+                            insertAttackedPositionCommand.ExecuteNonQuery();
+
+                            string map = _updateMap.GetMap(gameId, attacker, req, res);
+                            byte[] buffer2 = Encoding.UTF8.GetBytes(map);
+                            res.OutputStream.Write(buffer2, 0, buffer2.Length);
+
+                            if (defencePosition == AttackPosition)
+                            {
+                                var newDefenderHp = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = '{defender}' AND game_id = {gameId};");
+                                object? defenderHpObject = newDefenderHp.ExecuteScalar();
+
+                                if (defenderHpObject != null && int.TryParse(defenderHpObject.ToString(), out int defenderHp))
+                                {
+                                    if (defenderHp == 1)
+                                    {
+                                        var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_name = '{defender}' AND game_id = {gameId};");
+                                        hitRemoveHpCommand.ExecuteNonQuery();
+                                        string message = "\nKABOOOOM! You destroyed the enemy\n";
+                                        res.ContentType = "text/plain";
+                                        byte[] buffer = Encoding.UTF8.GetBytes(message);
+                                        res.OutputStream.Write(buffer, 0, buffer.Length);
+                                        res.OutputStream.Close();
+                                        res.StatusCode = (int)HttpStatusCode.Created;
+                                        UpdateWins(attacker);
+                                        EndGame(gameId);
+                                    }
+                                    else if (defenderHp <= 0)
+                                    {
+                                        string message = "\nEnemy already destroyed. You won the game!\n";
+                                        res.ContentType = "text/plain";
+                                        byte[] buffer = Encoding.UTF8.GetBytes(message);
+                                        res.OutputStream.Write(buffer, 0, buffer.Length);
+                                        res.OutputStream.Close();
+                                        res.StatusCode = (int)HttpStatusCode.Created;
+                                        res.Close();
+                                    }
+                                    else
+                                    {
+                                        var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_name = '{defender}' AND game_id = {gameId};");
+                                        hitRemoveHpCommand.ExecuteNonQuery();
+                                        string message = "\nYou hit the enemy and damaged the spaceship with 1 dmg.\n";
+                                        res.ContentType = "text/plain";
+                                        byte[] buffer = Encoding.UTF8.GetBytes(message);
+                                        res.OutputStream.Write(buffer, 0, buffer.Length);
+                                        res.OutputStream.Close();
+                                        res.StatusCode = (int)HttpStatusCode.Created;
+                                    }
+                                }
+                                else
+                                {
+                                    string message = "Could not parse defender HP.";
+                                    res.ContentType = "text/plain";
+                                    byte[] buffer = Encoding.UTF8.GetBytes(message);
+                                    res.OutputStream.Write(buffer, 0, buffer.Length);
+                                    res.OutputStream.Close();
+                                    res.StatusCode = (int)HttpStatusCode.Created;
+                                }
+                            }
+                            else
+                            {
+                                string message = "You missed the target!";
+                                res.ContentType = "text/plain";
+                                byte[] buffer = Encoding.UTF8.GetBytes(message);
+                                res.OutputStream.Write(buffer, 0, buffer.Length);
+                                res.OutputStream.Close();
+                                res.StatusCode = (int)HttpStatusCode.Created;
+                            }
                         }
                         else
                         {
-                            string message = "You hit the enemy and damaged the spaceship with 1 dmg.";
+                            string message = "Please choose a valid position to attack";
                             res.ContentType = "text/plain";
                             byte[] buffer = Encoding.UTF8.GetBytes(message);
                             res.OutputStream.Write(buffer, 0, buffer.Length);
                             res.OutputStream.Close();
-                            res.StatusCode = (int)HttpStatusCode.Created;
-                            
+                            res.StatusCode = (int)HttpStatusCode.NotAcceptable;
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Could not parse defender HP.");
+                        string input = "Attacker or defender does not exist.";
+                        res.ContentType = "text/plain";
+                        byte[] inputbuffer = Encoding.UTF8.GetBytes(input);
+                        res.OutputStream.Write(inputbuffer, 0, inputbuffer.Length);
+                        res.OutputStream.Close();
+                        res.StatusCode = (int)HttpStatusCode.InternalServerError;
                     }
                 }
                 else
                 {
-                    string message = "You missed the target!";
+                    string message = "Game over! You got destroyed!";
                     res.ContentType = "text/plain";
                     byte[] buffer = Encoding.UTF8.GetBytes(message);
                     res.OutputStream.Write(buffer, 0, buffer.Length);
@@ -110,23 +159,44 @@ public class Attack
                     res.StatusCode = (int)HttpStatusCode.Created;
                 }
             }
+            else
+            {
+                string message = "Expected format: game_id,attacker,A,2,defender";
+                byte[] buffer = Encoding.UTF8.GetBytes(message);
+                res.OutputStream.Write(buffer, 0, buffer.Length);
+                res.StatusCode = (int)HttpStatusCode.InternalServerError;
+                res.OutputStream.Close();
+            }
+
         }
         else
         {
-            //Denna behöver fixas 
-            string message = "Game over! You got destroyed!";
+            string input = "Wrong input or attacking yourself? \nExpected input: game_id,attacker,A,2,defender";
             res.ContentType = "text/plain";
-            byte[] buffer = Encoding.UTF8.GetBytes(message);
-            res.OutputStream.Write(buffer, 0, buffer.Length);
+            byte[] inputbuffer = Encoding.UTF8.GetBytes(input);
+            res.OutputStream.Write(inputbuffer, 0, inputbuffer.Length);
             res.OutputStream.Close();
-            res.StatusCode = (int)HttpStatusCode.Created;
-            
-            gameover = true;
-            //gametable ends. You lost the game!
+            res.StatusCode = (int)HttpStatusCode.InternalServerError;
         }
-        res.StatusCode = (int)HttpStatusCode.Created;
         res.Close();
     }
 
+    public void UpdateWins(string playerName)
+    {
+        using (var cmd = _db.CreateCommand("UPDATE users SET wins = wins + 1 WHERE name = @playerName"))
+        {
+            cmd.Parameters.AddWithValue("playerName", playerName);
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    public void EndGame(int gameId)
+    {
+        using (var cmd = _db.CreateCommand("UPDATE game SET game_ended = true WHERE id = @gameId"))
+        {
+            cmd.Parameters.AddWithValue("gameId", gameId);
+            cmd.ExecuteNonQuery();
+        }
+    }
 }
 

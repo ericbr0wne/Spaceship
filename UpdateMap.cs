@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using Npgsql;
 
 namespace Spaceship;
@@ -11,26 +12,21 @@ public class UpdateMap
         _db = db;
     }
     
-    public string GetMap(int gameId, string playerName)
+    public string GetMap(int gameId, string playerName, HttpListenerRequest req, HttpListenerResponse res)
     {
         string[,] map = new string[3, 3];
-        var playerPositionsCommand = _db.CreateCommand("SELECT user_name, position_id FROM users_x_position WHERE game_id = @gameId");
+        var playerPositionsCommand = _db.CreateCommand("SELECT user_name, position_id FROM user_x_position WHERE game_id = @gameId");
         playerPositionsCommand.Parameters.AddWithValue("gameId", gameId);
         var reader = playerPositionsCommand.ExecuteReader();
 
        // Dictionary<string, int> playerPositions = new Dictionary<string, int>();
         while (reader.Read())
         {
-            string userName = reader.GetString(0);
             int positionId = reader.GetInt32(1);
 
             int row = (positionId - 1) / 3;
             int col = (positionId - 1) % 3;
 
-            if (userName == playerName)
-            {
-                map[row, col] = userName;
-            }
         }
 
         var attackedPositionsCommand = _db.CreateCommand("SELECT position_id FROM attacked_positions WHERE game_id = @gameId AND user_name = @userName");
@@ -50,20 +46,53 @@ public class UpdateMap
                 map[row, col] = "X";
             }
         }
-        
+
         var mapString = new StringBuilder();
-        for (int i = 0; i < 3; i++)
+        mapString.AppendLine();
+
+        bool placedA = false;
+        bool placedB = false;
+        bool placedC = false;
+        bool placedCorner = false;
+        bool placed1 = false;
+        bool placed2 = false;
+        bool placed3 = false;
+
+        for (int i = 0; i < 4; i++)
         {
-            for (int j = 0; j < 3; j++)
+            for (int j = 0; j < 4; j++)
             {
-                string cell = map[i, j] ?? "O";
-                if (cell.Length > 6)
+                string cell;
+
+                if (!placedA)
                 {
-                    cell = cell.Substring(0, 6);
+                    cell = "A";
+                    placedA = true;
                 }
-                mapString.Append(cell.PadRight(6)).Append(" ");
+                else if (!placedB)
+                {
+                    cell = "B";
+                    placedB = true;
+                }
+                else if (!placedC)
+                {
+                    cell = "C";
+                    placedC = true;
+                }
+                else
+                {
+                    cell = map[i, j] ?? "O";
+                    if (cell.Length > 6)
+                    {
+                        cell = cell.Substring(0, 6);
+                    }
+                }
+
+                mapString.Append(cell.PadRight(3)).Append(" ");
             }
             mapString.AppendLine();
+            mapString.AppendLine();
+
         }
         return mapString.ToString();
     }
