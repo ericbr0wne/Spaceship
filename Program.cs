@@ -17,12 +17,12 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 };
 int port = 3000;
 HttpListener listener = new();
-listener.Prefixes.Add($"http://localhost:{port}/"); // lägg till din lokala ip adress om ni vill kunna koppla samman och spela från flera datorer.
+listener.Prefixes.Add($"http://localhost:{port}/"); 
 
 try
 {
     listener.Start();
-    listener.BeginGetContext(new AsyncCallback(HandleRequest), listener); //Här körs resten av kod i Async /wrapper 
+    listener.BeginGetContext(new AsyncCallback(HandleRequest), listener); 
     Console.WriteLine("Server listening on port: " + port);
     while (listen)
     {
