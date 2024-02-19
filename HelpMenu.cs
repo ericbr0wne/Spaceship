@@ -14,8 +14,7 @@ public class HelpMenu
 
  - CREATE CHARACTER - 
     What name do you want for your new character.
-    curl -s -d ""PLAYERNAME"" -X POST http://localhost:3000/newplayer
-
+    curl -s -d ""name=PLAYERNAME&password=PSW123"" -X POST http://localhost:3000/newplayer
 
  - NEW GAME - 
     Add your character to a map position to start a new game.

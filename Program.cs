@@ -66,8 +66,8 @@ void Router(HttpListenerContext context)
         case ("GET", "/mission"):
             story.Mission(response);
             break;
-        case ("POST", $"/createplayer"):
-            user.CreatePlayer(request, response);
+        case ("POST", $"/newplayer"):
+            user.NewPlayer(request, response);
             break;
         case ("POST", "/newgame"):
             gameplay.NewGame(request, response);
