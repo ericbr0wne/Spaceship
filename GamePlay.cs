@@ -66,7 +66,7 @@ public class GamePlay
                     insertHitpointsCmd.Parameters.AddWithValue(p1);
                     insertHitpointsCmd.ExecuteNonQuery();
 
-                    string map = _updateMap.GetMap(newGameId, playerName, req, res);
+                    string map = _updateMap.GetMap(newGameId, playerName);
 
                     string message = $"{p1} created a new game. REMEMBER THIS GAME-ID: {newGameId}\nHere is the current map: \n{map} ";
                     byte[] buffer = Encoding.UTF8.GetBytes(message);
@@ -157,7 +157,7 @@ public class GamePlay
                             insertHitpointsCmd.Parameters.AddWithValue(p2);
                             insertHitpointsCmd.ExecuteNonQuery();
 
-                            string map = _updateMap.GetMap(gameid, playerName, req, res);
+                            string map = _updateMap.GetMap(gameid, playerName);
 
                             string message = $"{p2} Joined the game.\nHere is the current map:\n{map}";
                             byte[] buffer = Encoding.UTF8.GetBytes(message);

@@ -63,7 +63,7 @@ public class Attack
                             insertAttackedPositionCommand.Parameters.AddWithValue(AttackPosition);
                             insertAttackedPositionCommand.ExecuteNonQuery();
 
-                            string map = _updateMap.GetMap(gameId, attacker, req, res);
+                            string map = _updateMap.GetMap(gameId, attacker);
                             byte[] buffer2 = Encoding.UTF8.GetBytes(map);
                             res.OutputStream.Write(buffer2, 0, buffer2.Length);
 
