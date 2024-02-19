@@ -14,7 +14,7 @@ BEGIN
         TRUNCATE TABLE users RESTART IDENTITY;
     EXCEPTION
         WHEN undefined_table THEN
-    END;
+    END;    
 END $$;
 
 
