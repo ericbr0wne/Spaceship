@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Npgsql" Version="8.0.1" />
+    <PackageReference Include="System.Windows.Extensions" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

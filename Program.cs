@@ -1,8 +1,10 @@
 using Npgsql;
 using Spaceship;
+using System.Media;
 using System.Net;
 using System.Reflection.Metadata;
 using System.Text;
+
 
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=spaceship";
@@ -44,9 +46,12 @@ void HandleRequest(IAsyncResult result)
 
 void Router(HttpListenerContext context)
 {
-
+    SoundEffects sound = new SoundEffects();
+    SoundPlayer lazer = sound.PlayLazer();
+    SoundPlayer kaboom = sound.PlayKaboom();
+  
+    Attack attack = new(_db, lazer, kaboom);
     User user = new(_db);
-    Attack attack = new(_db);
     GamePlay gameplay = new(_db);
     Router router = new();
     Story story = new Story();

@@ -1,14 +1,21 @@
 using Npgsql;
+using System.Media;
 using System.Net;
 using System.Text;
 namespace Spaceship;
 
 public class Attack
 {
+
     private NpgsqlDataSource _db;
-    public Attack(NpgsqlDataSource db)
+    private SoundPlayer _lazer;
+    private SoundPlayer _kaboom;
+    public Attack(NpgsqlDataSource db, SoundPlayer lazer, SoundPlayer kaboom)
     {
         _db = db;
+        _lazer = lazer;
+        _kaboom = kaboom;
+
     }
 
     public void AttackPlayer(HttpListenerRequest req, HttpListenerResponse res)
@@ -62,6 +69,9 @@ public class Attack
                                 {
                                     if (defenderHp == 1)
                                     {
+
+
+                                        
                                         var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_name = '{defender}' AND game_id = {gameId};");
                                         hitRemoveHpCommand.ExecuteNonQuery();
                                         string message = "\nKABOOOOM! You destroyed the enemy\n";
@@ -72,6 +82,7 @@ public class Attack
                                         res.StatusCode = (int)HttpStatusCode.Created;
                                         UpdateWins(attacker);
                                         EndGame(gameId);
+                                        _kaboom.Play();
                                     }
                                     else if (defenderHp <= 0)
                                     {
@@ -85,6 +96,8 @@ public class Attack
                                     }
                                     else
                                     {
+                                      
+
                                         var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_name = '{defender}' AND game_id = {gameId};");
                                         hitRemoveHpCommand.ExecuteNonQuery();
                                         string message = "\nYou hit the enemy and damaged the spaceship with 1 dmg.\n";
@@ -93,6 +106,7 @@ public class Attack
                                         res.OutputStream.Write(buffer, 0, buffer.Length);
                                         res.OutputStream.Close();
                                         res.StatusCode = (int)HttpStatusCode.Created;
+                                        _lazer.Play();
                                     }
                                 }
                                 else

@@ -16,5 +16,4 @@ public class Router
         res.StatusCode = (int)HttpStatusCode.NotFound;
         res.Close();
     }
-
 }
