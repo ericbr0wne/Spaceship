@@ -14,7 +14,7 @@ public class HelpMenu
 
  - CREATE CHARACTER - 
     What name do you want for your new character.
-    curl -s -d ""PLAYERNAME"" -X POST http://localhost:3000/newplayer
+    curl -s -d ""PLAYERNAME"" -X POST http://localhost:3000/createplayer
 
 
  - NEW GAME - 

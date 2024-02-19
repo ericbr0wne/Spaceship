@@ -20,10 +20,12 @@ public class User
 
     public void CreatePlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
-        // curl -s -d "PLAYERNAME" -X POST http://localhost:3000/newplayer
+        // curl -s -d "PLAYERNAME" -X POST http://localhost:3000/createplayer
 
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string playerName = reader.ReadToEnd().ToLower();
+        try
+        {
 
         var nameCheck = _db.CreateCommand("Select id From users WHERE name = ($1)");
         nameCheck.Parameters.AddWithValue(playerName);
@@ -42,13 +44,10 @@ public class User
         else
         {
             var cmd = _db.CreateCommand("insert into users (name) values ($1)");
-
             cmd.Parameters.AddWithValue(playerName);
             cmd.ExecuteNonQuery();
 
             string message = $"Created the following in db: {playerName}";
-            
-            
             res.ContentType = "text/plain";
             byte[] buffer = Encoding.UTF8.GetBytes(message);
             res.OutputStream.Write(buffer, 0, buffer.Length);
@@ -56,6 +55,16 @@ public class User
             res.StatusCode = (int)HttpStatusCode.Created;
         }
         
+        }
+        catch (Exception)
+        {
+            string message = $"Could not create player! Try again.";
+            res.ContentType = "text/plain";
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            res.OutputStream.Write(buffer, 0, buffer.Length);
+            res.OutputStream.Close();
+            res.StatusCode = (int)HttpStatusCode.Created;
+        }
         res.Close();
     }
 
