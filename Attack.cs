@@ -6,8 +6,8 @@ namespace Spaceship;
 
 public class Attack
 {
-    private NpgsqlDataSource _db;
-    private UpdateMap _updateMap;
+    private readonly NpgsqlDataSource _db;
+    private readonly UpdateMap _updateMap;
     public Attack(NpgsqlDataSource db)
     {
         _db = db;
