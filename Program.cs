@@ -58,6 +58,9 @@ void Router(HttpListenerContext context)
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
+        case ("GET", "/users"):
+            user.GetUsers(response);
+            break;
         case ("GET", "/help"):
             menu.Commands(response);
             break;
