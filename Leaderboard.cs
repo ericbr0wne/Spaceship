@@ -12,7 +12,7 @@ public class Leaderboard(NpgsqlDataSource db)
         res.ContentType = "text/plain";
         var getHighscore = _db.CreateCommand($"SELECT name, wins FROM users ORDER BY wins DESC; ");
         using var reader = getHighscore.ExecuteReader();
-        var header = "\x1b[1;33mHighscores:\x1b[0m";
+        var header = "\n\x1b[1;33mHIGHSCORE:\n\x1b[0m";
         var responseStream = res.OutputStream;
         var writer = new StreamWriter(responseStream);
         writer.WriteLine(header);
@@ -24,6 +24,7 @@ public class Leaderboard(NpgsqlDataSource db)
             var line = $"Name: {name}, Wins: {wins}";
             writer.WriteLine("\x1b[33m" + line + "\x1b[0m");
         }
+        Console.WriteLine("");
         reader.Close();
         writer.Close();
     }

@@ -14,9 +14,10 @@ public class User(NpgsqlDataSource db)
 
     public void CreatePlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
+        res.ContentType = "text/plain";
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string playerName = reader.ReadToEnd().ToLower();
-        try
+        if (playerName.Length < 1 && !playerName.Contains(" ") && playerName != DBNull.Value.ToString())
         {
             var nameCheck = _db.CreateCommand("Select id From users WHERE name = ($1)");
             nameCheck.Parameters.AddWithValue(playerName);
@@ -26,8 +27,6 @@ public class User(NpgsqlDataSource db)
             {
                 string message = $"Player {playerName} alredy exists";
                 res.StatusCode = (int)HttpStatusCode.Conflict;
-
-                res.ContentType = "text/plain";
                 byte[] buffer = Encoding.UTF8.GetBytes(message);
                 res.OutputStream.Write(buffer, 0, buffer.Length);
                 res.OutputStream.Close();
@@ -39,23 +38,20 @@ public class User(NpgsqlDataSource db)
                 cmd.ExecuteNonQuery();
 
                 string message = $"Created the following in db: {playerName}";
-                res.ContentType = "text/plain";
                 byte[] buffer = Encoding.UTF8.GetBytes(message);
                 res.OutputStream.Write(buffer, 0, buffer.Length);
                 res.OutputStream.Close();
                 res.StatusCode = (int)HttpStatusCode.Created;
             }
         }
-        catch (Exception)
+        else
         {
             string message = $"Could not create player! Try again.";
-            res.ContentType = "text/plain";
             byte[] buffer = Encoding.UTF8.GetBytes(message);
             res.OutputStream.Write(buffer, 0, buffer.Length);
             res.OutputStream.Close();
             res.StatusCode = (int)HttpStatusCode.Created;
         }
-
         res.Close();
     }
 
@@ -74,10 +70,8 @@ public class User(NpgsqlDataSource db)
         {
             var name = reader.GetString(0);
             var line = $"Name: {name}";
-
             writer.WriteLine("\x1b[94m" + line + "\x1b[0m");
         }
-
         reader.Close();
         writer.Close();
     }

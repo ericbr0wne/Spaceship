@@ -23,7 +23,7 @@ public class Attack(NpgsqlDataSource db)
 
         if (attacker.ToString() != defender.ToString())
         {
-            if (split.Length == 5)
+            if (split.Length == 5 && !postBody.Contains(" "))
             {
                 var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = @Attacker AND game_id = @game_id;");
                 attackerCommand.Parameters.AddWithValue("@Attacker", attacker);

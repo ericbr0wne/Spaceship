@@ -19,21 +19,21 @@ public class GamePlay(NpgsqlDataSource db)
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
         string[] split = postBody.Split(",");
-        if (split.Length == 4)
+        if (split.Length == 4 && !postBody.Contains(" "))
         {
             string gameid = split[0];
             string playerName = split[1];
             string posLr = split[2];
-            string posNr = split[3];
+            int posNr = int.Parse(split[3]);
 
             var getplayerNameCommand = _db.CreateCommand($"SELECT name FROM users WHERE name = '{playerName}';");
             object? p1 = getplayerNameCommand.ExecuteScalar();
 
             if (p1 != null)
             {
-                var getPositionCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = @pos AND horizontal = @nr;");
-                getPositionCommand.Parameters.AddWithValue("@pos", posLr);
-                getPositionCommand.Parameters.AddWithValue("@nr", posNr);
+                var getPositionCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = @posLr AND horizontal = @posNr;");
+                getPositionCommand.Parameters.AddWithValue("@posLr", posLr);
+                getPositionCommand.Parameters.AddWithValue("@posNr", posNr);
                 object? posIdObject = getPositionCommand.ExecuteScalar();
 
                 if (posIdObject != null && int.TryParse(posIdObject.ToString(), out int positionId))
@@ -110,12 +110,12 @@ public class GamePlay(NpgsqlDataSource db)
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
         string[] split = postBody.Split(",");
-        if (split.Length == 4)
+        if (split.Length == 4 && !postBody.Contains(" "))
         {
-            string inputgameid = split[0];
+            int inputgameid = int.Parse(split[0]);
             string playerName = split[1];
             string posLr = split[2];
-            string posNr = split[3];
+            int posNr = int.Parse(split[3]);
 
             var gameOpenCommand = _db.CreateCommand($"SELECT p2_name FROM game WHERE id = @gameid;");
             gameOpenCommand.Parameters.AddWithValue("@gameid", inputgameid);
@@ -123,13 +123,13 @@ public class GamePlay(NpgsqlDataSource db)
             if (openslot == DBNull.Value)
             {
                 var getPlayerNameCommand = _db.CreateCommand($"SELECT name FROM users WHERE name = @playername;");
-                gameOpenCommand.Parameters.AddWithValue("@playername", playerName);
+                getPlayerNameCommand.Parameters.AddWithValue("@playername", playerName);
                 object? p2 = getPlayerNameCommand.ExecuteScalar();
-                if (p2 != null)
+                if (playerName != null)
                 {
-                    var getPositionCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = @poslr AND horizontal = @posnr;");
-                    gameOpenCommand.Parameters.AddWithValue("@poslr", posLr);
-                    gameOpenCommand.Parameters.AddWithValue("@posnr", posNr);
+                    var getPositionCommand = _db.CreateCommand($"SELECT id FROM position WHERE vertical = @posLr AND horizontal = @posNr;");
+                    getPositionCommand.Parameters.AddWithValue("@posLr", posLr);
+                    getPositionCommand.Parameters.AddWithValue("@posNr", posNr);
                     object? posIdObject = getPositionCommand.ExecuteScalar();
 
                     if (posIdObject != null && int.TryParse(posIdObject.ToString(), out int positionId))
@@ -137,23 +137,23 @@ public class GamePlay(NpgsqlDataSource db)
                         if (int.TryParse(inputgameid.ToString(), out int gameid) && gameid > 0)
                         {
                             var gameInsertCommand = _db.CreateCommand("UPDATE game SET p2_name = $1 WHERE id = $2");
-                            gameInsertCommand.Parameters.AddWithValue(p2);
+                            gameInsertCommand.Parameters.AddWithValue(playerName);
                             gameInsertCommand.Parameters.AddWithValue(gameid);
                             gameInsertCommand.ExecuteNonQuery();
 
                             var posInsertCommand = _db.CreateCommand("INSERT INTO user_x_position (game_id, user_name, position_id) VALUES ($1, $2, $3);");
                             posInsertCommand.Parameters.AddWithValue(gameid);
-                            posInsertCommand.Parameters.AddWithValue(p2);
+                            posInsertCommand.Parameters.AddWithValue(playerName);
                             posInsertCommand.Parameters.AddWithValue(positionId);
                             posInsertCommand.ExecuteNonQuery();
 
                             var insertHitpointsCmd = _db.CreateCommand("INSERT INTO user_hitpoints (game_id, user_name) VALUES ($1, $2);");
                             insertHitpointsCmd.Parameters.AddWithValue(gameid);
-                            insertHitpointsCmd.Parameters.AddWithValue(p2);
+                            insertHitpointsCmd.Parameters.AddWithValue(playerName);
                             insertHitpointsCmd.ExecuteNonQuery();
 
                             string map = _updateMap.GetMap(gameid, playerName);
-                            string message = $"{p2} Joined the game.\nHere is the current map:\n{map}";
+                            string message = $"{playerName} Joined the game.\nHere is the current map:\n{map}";
                             byte[] buffer = Encoding.UTF8.GetBytes(message);
                             res.OutputStream.Write(buffer, 0, buffer.Length);
                             res.StatusCode = (int)HttpStatusCode.Created;
