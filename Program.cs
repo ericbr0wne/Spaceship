@@ -51,12 +51,16 @@ void Router(HttpListenerContext context)
     Router router = new();
     Story story = new Story();
     HelpMenu menu = new HelpMenu();
+    Leaderboard leaderboard = new Leaderboard(_db);
 
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
+        case ("GET", "/highscore"):
+            leaderboard.Highscore(response);
+            break;
         case ("GET", "/help"):
             menu.Commands(response);
             break;
