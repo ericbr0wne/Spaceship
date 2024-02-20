@@ -8,10 +8,9 @@ using System.Threading.Tasks;
 
 namespace Spaceship;
 
-public class GamePlay(NpgsqlDataSource db)
+public class GamePlay(NpgsqlDataSource _db)
 {
-    private readonly NpgsqlDataSource _db = db;
-    private readonly UpdateMap _updateMap = new(db);
+    private readonly UpdateMap _updateMap = new(_db);
 
     public void NewGame(HttpListenerRequest req, HttpListenerResponse res)
     {

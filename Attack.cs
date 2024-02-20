@@ -4,10 +4,9 @@ using System.Net;
 using System.Text;
 namespace Spaceship;
 
-public class Attack(NpgsqlDataSource db)
+public class Attack(NpgsqlDataSource _db)
 {
-    private readonly NpgsqlDataSource _db = db;
-    private readonly UpdateMap _updateMap = new(db);
+    private readonly UpdateMap _updateMap = new(_db);
 
     public void AttackPlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
@@ -21,7 +20,7 @@ public class Attack(NpgsqlDataSource db)
         int posNumber = int.Parse(split[3]);
         string defender = split[4];
 
-        if (attacker.ToString() != defender.ToString())
+        if (attacker != defender)
         {
             if (split.Length == 5 && !postBody.Contains(" "))
             {

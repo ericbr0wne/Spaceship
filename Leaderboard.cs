@@ -3,10 +3,8 @@ using Npgsql;
 
 namespace Spaceship;
 
-public class Leaderboard(NpgsqlDataSource db)
+public class Leaderboard(NpgsqlDataSource _db)
 {
-    private readonly NpgsqlDataSource _db = db;
-
     public void Highscore(HttpListenerResponse res)
     {
         res.ContentType = "text/plain";
