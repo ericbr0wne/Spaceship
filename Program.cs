@@ -55,8 +55,7 @@ void Router(HttpListenerContext context)
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) 
-    {
-        case ("GET", "/help"):
+    {        case ("GET", "/help"):
             menu.Commands(response);
             break;
         case ("GET", "/start"):
@@ -79,6 +78,9 @@ void Router(HttpListenerContext context)
             break;
         case ("POST", "/attack"):
             attack.AttackPlayer(request, response);
+            break;           
+        case ("GET", "/hp"):
+            user.getHp(response);
             break;
         case ("GET", "/highscore"):
             leaderboard.Highscore(response);
@@ -88,7 +90,3 @@ void Router(HttpListenerContext context)
             break;
     }
 }
-
-
-
-

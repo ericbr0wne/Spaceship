@@ -1,4 +1,5 @@
-﻿using Npgsql;
+using Microsoft.VisualBasic;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,6 +52,34 @@ public class User(NpgsqlDataSource _db)
             res.StatusCode = (int)HttpStatusCode.Created;
         }
         res.Close();
+    }
+
+    public void getHp(HttpListenerResponse response)
+    {
+        response.ContentType= "text/plain";
+        var getHp = _db.CreateCommand($"select user_name, hp from user_hitpoints;");
+
+        using (var reader = getHp.ExecuteReader())
+        {
+            var header = "\x1b[34mUsers hitpoints:\x1b[0m";
+             var responsestream = response.OutputStream;
+            var writer = new StreamWriter(responsestream);
+            writer.WriteLine(header);
+
+            while (reader.Read())
+            {
+                var name = reader.GetString(0);
+                var line = $"name: {name}";
+                var hp = reader.GetInt32(1);
+                var line2=  $"hp: {hp}";
+               
+                writer.WriteLine(line + " " + line2);
+            }
+            reader.Close();
+            writer.Close();
+
+        }
+            
     }
 
     public void Display(HttpListenerResponse res)
