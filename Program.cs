@@ -43,7 +43,6 @@ void HandleRequest(IAsyncResult result)
 }
 
 
-
 void Router(HttpListenerContext context)
 {
 
