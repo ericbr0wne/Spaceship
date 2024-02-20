@@ -4,13 +4,9 @@ using Npgsql;
 
 namespace Spaceship;
 
-public class UpdateMap
+public class UpdateMap(NpgsqlDataSource db)
 {
-    private NpgsqlDataSource _db;
-    public UpdateMap(NpgsqlDataSource db)
-    {
-        _db = db;
-    }
+    private NpgsqlDataSource _db = db;
 
     public string GetMap(int gameId, string playerName)
     {
