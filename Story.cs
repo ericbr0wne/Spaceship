@@ -7,6 +7,46 @@ public class Story
 {
    public void Intro(HttpListenerResponse res)
     {
+        // Define note frequencies in Hz
+        int f4 = 349;
+        int gS4 = 415;
+        int f5 = 698;
+        int c5 = 523;
+        int aS4 = 466;
+        int a4 = 440;
+        int g4 = 392;
+        int e5 = 659;
+        int gS5 = 830;
+        int a5 = 880;
+
+        // Define note durations in milliseconds
+        int quarter = 500;
+        int half = 1000;
+        int eighth = 250;
+
+        // Play the melody
+        Console.Beep(a4, half);
+        Console.Beep(a4, half);
+        Console.Beep(f4, quarter);
+        Console.Beep(c5, eighth + quarter); // dotted quarter note
+        Console.Beep(a4, half);
+        Console.Beep(f4, quarter);
+        Console.Beep(c5, eighth + quarter); // dotted quarter note
+        Console.Beep(a4, half);
+
+        Thread.Sleep(quarter);
+
+        Console.Beep(e5, half);
+        Console.Beep(e5, half);
+        Console.Beep(f5, quarter);
+        Console.Beep(c5, eighth + quarter); // dotted quarter note
+        Console.Beep(gS4, half);
+        Console.Beep(f4, quarter);
+        Console.Beep(c5, eighth + quarter); // dotted quarter note
+        Console.Beep(a4, half);
+
+        Thread.Sleep(quarter);
+
         string introMessage =
             "In a war between humanity and other species you find yourself in control of a spaceship \n" +
             "in the middle of the Centurio 5.B galaxy, you ended up here after you warped to get away from a battlefield where \n" +

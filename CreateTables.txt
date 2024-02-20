@@ -1,5 +1,5 @@
 drop table if exists user_hitpoints;
-drop table if exists users_x_position;
+drop table if exists user_x_position;
 drop table if exists game;
 
 DO $$
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS game(
     game_ended BOOL DEFAULT false
 );
 
-CREATE TABLE IF NOT EXISTS users_x_position(
+CREATE TABLE IF NOT EXISTS user_x_position(
     game_id INT REFERENCES game(id),
     user_name TEXT REFERENCES users(name),
     position_id INT REFERENCES position(id)
@@ -50,6 +50,13 @@ CREATE TABLE IF NOT EXISTS user_hitpoints(
     user_name TEXT REFERENCES users(name),
     hp INT NOT NULL DEFAULT 3,
     PRIMARY KEY (game_id, user_name)
+);
+
+CREATE TABLE IF NOT EXISTS attacked_positions(
+id SERIAL PRIMARY KEY,
+game_id INT NOT NULL REFERENCES game(id),
+user_name TEXT NOT NULL REFERENCES users(name),
+position_id INT NOT NULL REFERENCES position(id)
 );
 
 INSERT INTO position (vertical, horizontal) VALUES

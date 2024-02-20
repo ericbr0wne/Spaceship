@@ -42,6 +42,7 @@ void HandleRequest(IAsyncResult result)
     }
 }
 
+
 void Router(HttpListenerContext context)
 {
 
@@ -56,10 +57,12 @@ void Router(HttpListenerContext context)
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
-    switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
+    switch (request.HttpMethod, request.Url?.AbsolutePath) 
     {
         case ("GET", "/highscore"):
             leaderboard.Highscore(response);
+        case ("GET", "/users"):
+            user.GetUsers(response);
             break;
         case ("GET", "/help"):
             menu.Commands(response);
