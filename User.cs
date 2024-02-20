@@ -8,16 +8,14 @@ using System.Threading.Tasks;
 
 namespace Spaceship;
 
-public class User(NpgsqlDataSource db)
+public class User(NpgsqlDataSource _db)
 {
-    private readonly NpgsqlDataSource _db = db;
-
     public void CreatePlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
         res.ContentType = "text/plain";
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string playerName = reader.ReadToEnd().ToLower();
-        if (playerName.Length < 1 && !playerName.Contains(" ") && playerName != DBNull.Value.ToString())
+        if (playerName.Length > 0 && !playerName.Contains(" ") && playerName != DBNull.Value.ToString())
         {
             var nameCheck = _db.CreateCommand("Select id From users WHERE name = ($1)");
             nameCheck.Parameters.AddWithValue(playerName);
