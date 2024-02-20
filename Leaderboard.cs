@@ -29,7 +29,7 @@ public class Leaderboard
                 var wins = reader.GetInt32(1);
                 var line = $"Name: {name}, Wins: {wins}";
             
-                writer.WriteLine("\x1b[33m" + line + "\x1b[0m"); // ANSI escape code for yellow color
+                writer.WriteLine("\x1b[33m" + line + "\x1b[0m");
             }
             reader.Close();
             writer.Close();

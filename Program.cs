@@ -61,6 +61,7 @@ void Router(HttpListenerContext context)
     {
         case ("GET", "/highscore"):
             leaderboard.Highscore(response);
+            break;
         case ("GET", "/users"):
             user.GetUsers(response);
             break;
