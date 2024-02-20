@@ -53,12 +53,16 @@ void Router(HttpListenerContext context)
     Router router = new();
     Story story = new Story();
     HelpMenu menu = new HelpMenu();
+    Globalchat globalchat = new Globalchat(_db);
 
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
     switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
     {
+        case ("POST", "/chat"):
+            globalchat.Chat(request, response);
+            break;
         case ("GET", "/help"):
             menu.Commands(response);
             break;
@@ -85,7 +89,3 @@ void Router(HttpListenerContext context)
             break;
     }
 }
-
-
-
-
