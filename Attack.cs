@@ -4,18 +4,14 @@ using System.Net;
 using System.Text;
 namespace Spaceship;
 
-public class Attack
+public class Attack(NpgsqlDataSource db)
 {
-    private readonly NpgsqlDataSource _db;
-    private readonly UpdateMap _updateMap;
-    public Attack(NpgsqlDataSource db)
-    {
-        _db = db;
-        _updateMap = new UpdateMap(db);
-    }
+    private readonly NpgsqlDataSource _db = db;
+    private readonly UpdateMap _updateMap = new(db);
 
     public void AttackPlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
+        res.ContentType = "text/plain";
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
         string[] split = postBody.Split(",");
@@ -86,7 +82,6 @@ public class Attack
                                             hitRemoveHpCommand.ExecuteNonQuery();
 
                                             string message = $"\nKABOOOOM! You destroyed {defender}! You won the game!\n";
-                                            res.ContentType = "text/plain";
                                             byte[] buffer = Encoding.UTF8.GetBytes(message);
                                             res.OutputStream.Write(buffer, 0, buffer.Length);
                                             res.OutputStream.Close();
@@ -97,7 +92,6 @@ public class Attack
                                         else
                                         {
                                             string message = $"\nGame ended. {attacker} won the game!\n";
-                                            res.ContentType = "text/plain";
                                             byte[] buffer = Encoding.UTF8.GetBytes(message);
                                             res.OutputStream.Write(buffer, 0, buffer.Length);
                                             res.OutputStream.Close();
@@ -108,7 +102,6 @@ public class Attack
                                     else
                                     {
                                         string message = "Could not parse defender HP.";
-                                        res.ContentType = "text/plain";
                                         byte[] buffer = Encoding.UTF8.GetBytes(message);
                                         res.OutputStream.Write(buffer, 0, buffer.Length);
                                         res.OutputStream.Close();
@@ -118,7 +111,6 @@ public class Attack
                                 else
                                 {
                                     string message = "You missed the target!";
-                                    res.ContentType = "text/plain";
                                     byte[] buffer = Encoding.UTF8.GetBytes(message);
                                     res.OutputStream.Write(buffer, 0, buffer.Length);
                                     res.OutputStream.Close();
@@ -128,7 +120,6 @@ public class Attack
                             else
                             {
                                 string message = "Please choose a valid position to attack";
-                                res.ContentType = "text/plain";
                                 byte[] buffer = Encoding.UTF8.GetBytes(message);
                                 res.OutputStream.Write(buffer, 0, buffer.Length);
                                 res.OutputStream.Close();
@@ -138,7 +129,6 @@ public class Attack
                         else
                         {
                             string message = "Can not parse defenceposition";
-                            res.ContentType = "text/plain";
                             byte[] buffer = Encoding.UTF8.GetBytes(message);
                             res.OutputStream.Write(buffer, 0, buffer.Length);
                             res.OutputStream.Close();
@@ -148,7 +138,6 @@ public class Attack
                     else
                     {
                         string input = "Attacker or defender does not exist.";
-                        res.ContentType = "text/plain";
                         byte[] inputbuffer = Encoding.UTF8.GetBytes(input);
                         res.OutputStream.Write(inputbuffer, 0, inputbuffer.Length);
                         res.OutputStream.Close();
@@ -158,7 +147,6 @@ public class Attack
                 else
                 {
                     string message = "You have been destroyed! Game over.";
-                    res.ContentType = "text/plain";
                     byte[] buffer = Encoding.UTF8.GetBytes(message);
                     res.OutputStream.Write(buffer, 0, buffer.Length);
                     res.OutputStream.Close();
@@ -178,7 +166,6 @@ public class Attack
         else
         {
             string input = "Expected format: game_id,attacker,A,2,defender";
-            res.ContentType = "text/plain";
             byte[] inputbuffer = Encoding.UTF8.GetBytes(input);
             res.OutputStream.Write(inputbuffer, 0, inputbuffer.Length);
             res.OutputStream.Close();
@@ -189,11 +176,9 @@ public class Attack
 
     public void UpdateWins(string playerName)
     {
-        using (var cmd = _db.CreateCommand("UPDATE users SET wins = wins + 1 WHERE name = @playerName"))
-        {
-            cmd.Parameters.AddWithValue("playerName", playerName);
-            cmd.ExecuteNonQuery();
-        }
+        using var cmd = _db.CreateCommand("UPDATE users SET wins = wins + 1 WHERE name = @playerName");
+        cmd.Parameters.AddWithValue("playerName", playerName);
+        cmd.ExecuteNonQuery();
     }
 
 }

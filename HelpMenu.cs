@@ -32,7 +32,9 @@ public class HelpMenu
  - ATTACK - 
     To attack another player, enter the game-id, your character name,
     the position you would like to attack (A-C,1-3) and the enemy name.                          
-    curl -s -d ""GAMEID,YOURNAME,E,5,ENEMYNAME"" -X POST http://localhost:3000/attack";
+    curl -s -d ""GAMEID,YOURNAME,E,5,ENEMYNAME"" -X POST http://localhost:3000/attack
+
+";
  
         byte[] buffer = Encoding.UTF8.GetBytes(helpMenu);
         res.OutputStream.Write(buffer, 0, buffer.Length);

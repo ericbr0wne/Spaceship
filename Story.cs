@@ -5,19 +5,16 @@ namespace Spaceship;
 
 public class Story
 {
-   public void Intro(HttpListenerResponse res)
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
+    public void Intro(HttpListenerResponse res)
     {
         // Define note frequencies in Hz
         int f4 = 349;
         int gS4 = 415;
         int f5 = 698;
         int c5 = 523;
-        int aS4 = 466;
         int a4 = 440;
-        int g4 = 392;
         int e5 = 659;
-        int gS5 = 830;
-        int a5 = 880;
 
         // Define note durations in milliseconds
         int quarter = 500;

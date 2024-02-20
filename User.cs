@@ -8,20 +8,12 @@ using System.Threading.Tasks;
 
 namespace Spaceship;
 
-public class User
+public class User(NpgsqlDataSource db)
 {
-    private NpgsqlDataSource _db;
-
-    public User(NpgsqlDataSource db)
-    {
-        _db = db;
-    }
-
+    private readonly NpgsqlDataSource _db = db;
 
     public void CreatePlayer(HttpListenerRequest req, HttpListenerResponse res)
     {
-        // curl -s -d "PLAYERNAME" -X POST http://localhost:3000/createplayer
-
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string playerName = reader.ReadToEnd().ToLower();
         try
@@ -67,28 +59,26 @@ public class User
         res.Close();
     }
 
-    public void GetUsers(HttpListenerResponse res)
+    public void Display(HttpListenerResponse res)
     {
         res.ContentType = "text/plain";
         var getUsers = _db.CreateCommand($"SELECT name FROM users; ");
 
-        using (var reader = getUsers.ExecuteReader())
+        using var reader = getUsers.ExecuteReader();
+        var header = "\x1b[34mUsers:\x1b[0m";
+        var responseStream = res.OutputStream;
+        var writer = new StreamWriter(responseStream);
+        writer.WriteLine(header);
+
+        while (reader.Read())
         {
-            var header = "\x1b[34mUsers:\x1b[0m";
-            var responseStream = res.OutputStream;
-            var writer = new StreamWriter(responseStream);
-            writer.WriteLine(header);
+            var name = reader.GetString(0);
+            var line = $"Name: {name}";
 
-            while (reader.Read())
-            {
-                var name = reader.GetString(0);
-                var line = $"Name: {name}";
-
-                writer.WriteLine("\x1b[94m" + line + "\x1b[0m");
-            }
-
-            reader.Close();
-            writer.Close();
+            writer.WriteLine("\x1b[94m" + line + "\x1b[0m");
         }
+
+        reader.Close();
+        writer.Close();
     }
 }

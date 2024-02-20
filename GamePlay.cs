@@ -8,16 +8,10 @@ using System.Threading.Tasks;
 
 namespace Spaceship;
 
-public class GamePlay
+public class GamePlay(NpgsqlDataSource db)
 {
-    private readonly NpgsqlDataSource _db;
-    private UpdateMap _updateMap;
-    public GamePlay(NpgsqlDataSource db)
-    {
-        _db = db;
-        _updateMap = new UpdateMap(db);
-    }
-
+    private readonly NpgsqlDataSource _db = db;
+    private readonly UpdateMap _updateMap = new(db);
 
     public void NewGame(HttpListenerRequest req, HttpListenerResponse res)
     {
@@ -100,7 +94,6 @@ public class GamePlay
         else
         {
             string input = "Expected format: game_id,attacker,A,2,defender";
-            res.ContentType = "text/plain";
             byte[] inputbuffer = Encoding.UTF8.GetBytes(input);
             res.OutputStream.Write(inputbuffer, 0, inputbuffer.Length);
             res.OutputStream.Close();
@@ -205,7 +198,6 @@ public class GamePlay
         else
         {
             string input = "Expected format: game_id,attacker,A,2,defender";
-            res.ContentType = "text/plain";
             byte[] inputbuffer = Encoding.UTF8.GetBytes(input);
             res.OutputStream.Write(inputbuffer, 0, inputbuffer.Length);
             res.OutputStream.Close();
