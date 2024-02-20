@@ -26,7 +26,6 @@ public class GamePlay
         res.ContentType = "text/plain";
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
-
         string[] split = postBody.Split(",");
         if (split.Length != 4)
         {
@@ -165,7 +164,6 @@ public class GamePlay
                             res.StatusCode = (int)HttpStatusCode.Created;
                             res.OutputStream.Close();
                         }
-
                         else
                         {
                             string message = $"GameId is does not exist";
