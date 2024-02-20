@@ -4,32 +4,17 @@ using Npgsql;
 
 namespace Spaceship;
 
-public class UpdateMap
+public class UpdateMap(NpgsqlDataSource db)
 {
-    private NpgsqlDataSource _db;
-    public UpdateMap(NpgsqlDataSource db)
-    {
-        _db = db;
-    }
+    private NpgsqlDataSource _db = db;
 
     public string GetMap(int gameId, string playerName)
     {
         string[,] map = new string[4, 4];
-        var playerPositionsCommand = _db.CreateCommand("SELECT user_name, position_id FROM user_x_position WHERE game_id = @gameId");
-        playerPositionsCommand.Parameters.AddWithValue("gameId", gameId);
-        var reader = playerPositionsCommand.ExecuteReader();
 
-        
-        while (reader.Read())
-        {
-            int positionId = reader.GetInt32(1);
-
-            int row = (positionId - 1) / 3;
-            int col = (positionId - 1) % 3;
-            
-        }
-
-        var attackedPositionsCommand = _db.CreateCommand("SELECT position_id FROM attacked_positions WHERE game_id = @gameId AND user_name = @userName");
+        var attackedPositionsCommand =
+            _db.CreateCommand(
+                "SELECT position_id FROM attacked_positions WHERE game_id = @gameId AND user_name = @userName");
         attackedPositionsCommand.Parameters.AddWithValue("gameId", gameId);
         attackedPositionsCommand.Parameters.AddWithValue("userName", playerName);
         var attackedReader = attackedPositionsCommand.ExecuteReader();
@@ -58,8 +43,7 @@ public class UpdateMap
         {
             for (int j = 0; j < 4; j++)
             {
-
-                if (i==0 && j == 0)
+                if (i == 0 && j == 0)
                 {
                     cell = "     ";
                 }
@@ -93,13 +77,14 @@ public class UpdateMap
                 {
                     cell = map[i, j] ?? "O";
                 }
-                
+
                 mapString.Append(cell.PadRight(3)).Append(" ");
             }
-            mapString.AppendLine();
-            mapString.AppendLine();
 
+            mapString.AppendLine();
+            mapString.AppendLine();
         }
+
         return mapString.ToString();
     }
 }

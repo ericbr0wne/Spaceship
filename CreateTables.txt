@@ -35,8 +35,7 @@ CREATE TABLE IF NOT EXISTS position(
 CREATE TABLE IF NOT EXISTS game(
     id SERIAL PRIMARY KEY,
     p1_name TEXT REFERENCES users(name),
-    p2_name TEXT REFERENCES users(name),
-    game_ended BOOL DEFAULT false
+    p2_name TEXT REFERENCES users(name)
 );
 
 CREATE TABLE IF NOT EXISTS user_x_position(
@@ -48,7 +47,7 @@ CREATE TABLE IF NOT EXISTS user_x_position(
 CREATE TABLE IF NOT EXISTS user_hitpoints(
     game_id INT REFERENCES game(id),
     user_name TEXT REFERENCES users(name),
-    hp INT NOT NULL DEFAULT 3,
+    hp INT NOT NULL DEFAULT 1,
     PRIMARY KEY (game_id, user_name)
 );
 
