@@ -11,7 +11,6 @@ public class Attack
     {
         _db = db;
         _updateMap = new UpdateMap(db);
-
     }
 
     public void AttackPlayer(HttpListenerRequest req, HttpListenerResponse res)
@@ -21,7 +20,6 @@ public class Attack
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
         string[] split = postBody.Split(",");
-
         int gameId = int.Parse(split[0]);
         string attacker = split[1];
         var posLetter = split[2];
