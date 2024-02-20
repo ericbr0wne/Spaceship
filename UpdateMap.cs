@@ -19,7 +19,7 @@ public class UpdateMap
         playerPositionsCommand.Parameters.AddWithValue("gameId", gameId);
         var reader = playerPositionsCommand.ExecuteReader();
 
-        // Dictionary<string, int> playerPositions = new Dictionary<string, int>();
+        
         while (reader.Read())
         {
             int positionId = reader.GetInt32(1);
@@ -94,8 +94,6 @@ public class UpdateMap
                     cell = map[i, j] ?? "O";
                 }
                 
-
-
                 mapString.Append(cell.PadRight(3)).Append(" ");
             }
             mapString.AppendLine();
