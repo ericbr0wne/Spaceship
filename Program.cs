@@ -60,7 +60,9 @@ void Router(HttpListenerContext context)
     switch (request.HttpMethod, request.Url?.AbsolutePath) 
     {
         case ("GET", "/highscore"):
+
             leaderboard.Highscore(response);
+            break;
         case ("GET", "/users"):
             user.GetUsers(response);
             break;
@@ -84,6 +86,10 @@ void Router(HttpListenerContext context)
             break;
         case ("POST", "/attack"):
             attack.AttackPlayer(request, response);
+            break;
+           
+        case ("GET", "/hp"):
+            user.getHp(response);
             break;
         default:
             router.NotFound(response);
