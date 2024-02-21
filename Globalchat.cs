@@ -38,6 +38,7 @@ namespace Spaceship
             string chatMessage = requestData[1];
 
 
+
             var cmd = _db.CreateCommand("SELECT name FROM users WHERE name = @playerName");
             cmd.Parameters.AddWithValue("@playerName", playerName);
             object? playerExists = cmd.ExecuteScalar();
