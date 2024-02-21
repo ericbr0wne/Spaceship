@@ -21,7 +21,6 @@ END $$;
 CREATE TABLE IF NOT EXISTS users(
     id SERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
-    password_hash TEXT,
     wins INT NOT NULL DEFAULT 0
 ); 
 

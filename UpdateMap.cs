@@ -39,49 +39,32 @@ public class UpdateMap(NpgsqlDataSource db)
 
         string cell;
 
-        for (int i = 0; i < 4; i++)
+        mapString.Append(" "); // Start with one spaces to align with the column letters
+        for (int j = 1; j <= 3; j++)
         {
-            for (int j = 0; j < 4; j++)
+            mapString.Append(" " + j + " "); // Reduced padding to 1
+        }
+
+        mapString.AppendLine();
+
+        for (int i = 1; i <= 3; i++)
+        {
+            mapString.Append((char)('A' + i - 1)); // Removed the space before the letter
+            for (int j = 1; j <= 3; j++)
             {
-                if (i == 0 && j == 0)
+                cell = (map[i, j] ?? "O").PadLeft(2); // Reduced padding to 2
+                if (map[i, j] == "X")
                 {
-                    cell = "     ";
-                }
-
-                else if (i == 0 && j == 1)
-                {
-                    cell = "1";
-                }
-                else if (i == 0 && j == 2)
-                {
-                    cell = "2";
-                }
-                else if (i == 0 && j == 3)
-                {
-                    cell = "3";
-                }
-                else if (i == 1 && j == 0)
-                {
-                    cell = "   A ";
-                }
-
-                else if (i == 2 && j == 0)
-                {
-                    cell = "   B ";
-                }
-                else if (i == 3 && j == 0)
-                {
-                    cell = "   C ";
+                    cell = "\x1b[31m" + cell + "\x1b[0m"; // Red
                 }
                 else
                 {
-                    cell = map[i, j] ?? "O";
+                    cell = "\x1b[32m" + cell + "\x1b[0m"; // Green
                 }
 
-                mapString.Append(cell.PadRight(3)).Append(" ");
+                mapString.Append(cell + " ");
             }
 
-            mapString.AppendLine();
             mapString.AppendLine();
         }
 
