@@ -47,15 +47,21 @@ void Router(HttpListenerContext context)
     Attack attack = new(_db);
     GamePlay gameplay = new(_db);
     Router router = new();
-    Story story = new();
-    HelpMenu menu = new();
+    Story story = new Story();
+    HelpMenu menu = new HelpMenu();
+    Globalchat globalchat = new Globalchat(_db); 
     Leaderboard leaderboard = new(_db);
 
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
-    switch (request.HttpMethod, request.Url?.AbsolutePath) 
-    {        case ("GET", "/help"):
+  
+    switch (request.HttpMethod, request.Url?.AbsolutePath)
+    {
+        case ("POST", "/chat"):
+            globalchat.Chat(request, response);
+            break;
+        case ("GET", "/help"):
             menu.Commands(response);
             break;
         case ("GET", "/start"):
@@ -89,4 +95,7 @@ void Router(HttpListenerContext context)
             router.NotFound(response);
             break;
     }
+
+
 }
+

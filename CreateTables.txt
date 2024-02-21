@@ -58,7 +58,20 @@ user_name TEXT NOT NULL REFERENCES users(name),
 position_id INT NOT NULL REFERENCES position(id)
 );
 
+CREATE TABLE IF NOT EXISTS game_chat (
+    id SERIAL PRIMARY KEY,
+    player_name TEXT NOT NULL,
+    message TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS player_colors (
+    player_name TEXT PRIMARY KEY,
+    color_code TEXT NOT NULL 
+);
+
 INSERT INTO position (vertical, horizontal) VALUES
 ('a', 1), ('a', 2), ('a', 3),
 ('b', 1), ('b', 2), ('b', 3),
 ('c', 1), ('c', 2), ('c', 3);
+
+
