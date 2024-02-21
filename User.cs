@@ -77,7 +77,6 @@ public class User(NpgsqlDataSource _db)
             }
             reader.Close();
             writer.Close();
-
         }
             
     }
@@ -88,7 +87,7 @@ public class User(NpgsqlDataSource _db)
         var getUsers = _db.CreateCommand($"SELECT name FROM users; ");
 
         using var reader = getUsers.ExecuteReader();
-        var header = "\x1b[34mUsers:\x1b[0m";
+        var header = "\n\x1b[34mUsers:\x1b[0m\n";
         var responseStream = res.OutputStream;
         var writer = new StreamWriter(responseStream);
         writer.WriteLine(header);

@@ -2,6 +2,7 @@ using Npgsql;
 using System.ComponentModel.Design;
 using System.Net;
 using System.Text;
+
 namespace Spaceship;
 
 public class Attack(NpgsqlDataSource _db)
@@ -14,15 +15,15 @@ public class Attack(NpgsqlDataSource _db)
         StreamReader reader = new(req.InputStream, req.ContentEncoding);
         string postBody = reader.ReadToEnd().ToLower();
         string[] split = postBody.Split(",");
-        int gameId = int.Parse(split[0]);
-        string attacker = split[1];
-        var posLetter = split[2];
-        int posNumber = int.Parse(split[3]);
-        string defender = split[4];
-
-        if (attacker != defender)
+        if (split.Length == 5 && !postBody.Contains(" "))
         {
-            if (split.Length == 5 && !postBody.Contains(" "))
+            int gameId = int.Parse(split[0]);
+            string attacker = split[1];
+            var posLetter = split[2];
+            int posNumber = int.Parse(split[3]);
+            string defender = split[4];
+
+            if (attacker != defender)
             {
                 var attackerCommand = _db.CreateCommand($"SELECT hp FROM user_hitpoints WHERE user_name = @Attacker AND game_id = @game_id;");
                 attackerCommand.Parameters.AddWithValue("@Attacker", attacker);
@@ -47,7 +48,6 @@ public class Attack(NpgsqlDataSource _db)
                         object? defenceObject = defenderPositionCommand.ExecuteScalar();
                         if (defenceObject != null && int.TryParse(defenceObject.ToString(), out int defencePosition))
                         {
-
                             var attackId = _db.CreateCommand($"SELECT id FROM position WHERE vertical = '{posLetter}' AND horizontal = {posNumber};");
                             object? attack = attackId.ExecuteScalar();
 
@@ -77,7 +77,7 @@ public class Attack(NpgsqlDataSource _db)
                                             var hitRemoveHpCommand = _db.CreateCommand($"UPDATE user_hitpoints SET hp = hp - 1 WHERE user_name = @defender AND game_id = @gameId;");
                                             hitRemoveHpCommand.Parameters.AddWithValue("@defender", defender);
                                             hitRemoveHpCommand.Parameters.AddWithValue("@gameId", gameId);
-                                            
+
                                             hitRemoveHpCommand.ExecuteNonQuery();
 
                                             string message = $"\nKABOOOOM! You destroyed {defender}! You won the game!\n";
@@ -86,7 +86,6 @@ public class Attack(NpgsqlDataSource _db)
                                             res.OutputStream.Close();
                                             res.StatusCode = (int)HttpStatusCode.Created;
                                             UpdateWins(attacker);
-
                                         }
                                         else
                                         {
@@ -154,22 +153,22 @@ public class Attack(NpgsqlDataSource _db)
             }
             else
             {
-                string message = "Expected format: game_id,attacker,A,2,defender";
-                byte[] buffer = Encoding.UTF8.GetBytes(message);
-                res.OutputStream.Write(buffer, 0, buffer.Length);
-                res.StatusCode = (int)HttpStatusCode.InternalServerError;
+                string input = "Expected format: game_id,attacker,A,2,defender";
+                byte[] inputbuffer = Encoding.UTF8.GetBytes(input);
+                res.OutputStream.Write(inputbuffer, 0, inputbuffer.Length);
                 res.OutputStream.Close();
+                res.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
-
         }
         else
         {
-            string input = "Expected format: game_id,attacker,A,2,defender";
-            byte[] inputbuffer = Encoding.UTF8.GetBytes(input);
-            res.OutputStream.Write(inputbuffer, 0, inputbuffer.Length);
-            res.OutputStream.Close();
+            string message = "Expected format: game_id,attacker,A,2,defender";
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            res.OutputStream.Write(buffer, 0, buffer.Length);
             res.StatusCode = (int)HttpStatusCode.InternalServerError;
+            res.OutputStream.Close();
         }
+
         res.Close();
     }
 
@@ -179,6 +178,4 @@ public class Attack(NpgsqlDataSource _db)
         cmd.Parameters.AddWithValue("playerName", playerName);
         cmd.ExecuteNonQuery();
     }
-
 }
-
