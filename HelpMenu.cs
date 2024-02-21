@@ -51,6 +51,11 @@ Use the commands below to navigate in the game.
  - USERS -
     To view players:
     curl -s http://localhost:3000/users
+
+   - HP -
+   To see players HP:
+   curl -s localhost:3000/hp
+
 ";
       string neonBlue = "\x1b[38;5;75m";
    // Konvertera texten till byte-array och skriv till utmatningsströmmen
