@@ -57,23 +57,25 @@ public class User(NpgsqlDataSource _db)
     public void getHp(HttpListenerResponse response)
     {
         response.ContentType= "text/plain";
-        var getHp = _db.CreateCommand($"select user_name, hp from user_hitpoints;");
+        var getHp = _db.CreateCommand($"select game_id, user_name, hp from user_hitpoints;");
 
         using (var reader = getHp.ExecuteReader())
         {
-            var header = "\x1b[34mUsers hitpoints:\x1b[0m";
-             var responsestream = response.OutputStream;
+            var header = "\x1b[34mUsers hitpoints per game:\x1b[0m";
+            var responsestream = response.OutputStream;
             var writer = new StreamWriter(responsestream);
             writer.WriteLine(header);
 
             while (reader.Read())
             {
-                var name = reader.GetString(0);
-                var line = $"name: {name}";
-                var hp = reader.GetInt32(1);
-                var line2=  $"hp: {hp}";
+                var gameId = reader.GetInt32(0);
+                var line = $"\x1b[32mgame id: \x1b[0m{gameId}";
+                var name = reader.GetString(1);
+                var line1 = $"\x1b[34mname: \x1b[0m{name}";
+                var hp = reader.GetInt32(2);
+                var line2 = $"\x1b[31mhp: \x1b[0m{hp}";
                
-                writer.WriteLine(line + " " + line2);
+                writer.WriteLine(line +" " + line1 +" " + line2);
             }
             reader.Close();
             writer.Close();
