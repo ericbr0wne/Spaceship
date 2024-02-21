@@ -9,8 +9,8 @@ namespace Spaceship
 {
     public class Globalchat
     {
-        private NpgsqlDataSource _db;
-        private Dictionary<string, string> _playerColors;
+        private readonly NpgsqlDataSource _db;
+        private readonly Dictionary<string, string> _playerColors;
 
         public Globalchat(NpgsqlDataSource db)
         {
@@ -23,7 +23,7 @@ namespace Spaceship
             string message;
             using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
             {
-                message = reader.ReadToEnd();
+                message = reader.ReadToEnd().ToLower();
             }
 
             string[] requestData = message.Split(',');
@@ -37,13 +37,41 @@ namespace Spaceship
             string playerName = requestData[0];
             string chatMessage = requestData[1];
 
-            bool playerExists;
 
-            var cmd = _db.CreateCommand($"SELECT COUNT(*) FROM users WHERE name = @playerName");
-            cmd.Parameters.AddWithValue("playerName", playerName);
-            playerExists = (long)cmd.ExecuteScalar() > 0;
+            var cmd = _db.CreateCommand("SELECT name FROM users WHERE name = @playerName");
+            cmd.Parameters.AddWithValue("@playerName", playerName);
+            object? playerExists = cmd.ExecuteScalar();
 
-            if (!playerExists)
+            if (playerExists != null)
+            {
+                cmd =_db.CreateCommand("SELECT player_name FROM player_colors  WHERE player_name = @playerName");
+                cmd.Parameters.AddWithValue("@playerName", playerName);
+                object? playerNameObjects= cmd.ExecuteScalar();
+
+                cmd = _db.CreateCommand("INSERT INTO game_chat (player_name, message) VALUES (@playerName, @message)");
+                cmd.Parameters.AddWithValue("playerName", playerName);
+                cmd.Parameters.AddWithValue("message", chatMessage);
+                cmd.ExecuteNonQuery();
+
+                cmd = _db.CreateCommand("SELECT player_name, message FROM game_chat ORDER BY id DESC LIMIT 10");
+                using (var reader = cmd.ExecuteReader())
+                {
+                    var responseStream = res.OutputStream;
+                    var writer = new StreamWriter(responseStream);
+
+                    while (reader.Read())
+                    {
+                        string messagePlayerName = reader.GetString(0);
+                        string messageChat = reader.GetString(1);
+                        string colorCode = GetPlayerColor(messagePlayerName, playerExists.ToString());
+                        var line = $"\u001b[{colorCode}m{messagePlayerName}: {messageChat}\u001b[0m"; // ANSI escape codes for colors
+                        writer.WriteLine(line);
+                    }
+                    reader.Close();
+                    writer.Close();
+                }
+            }
+            else
             {
                 res.ContentType = "text/plain";
                 res.StatusCode = (int)HttpStatusCode.BadRequest;
@@ -54,32 +82,9 @@ namespace Spaceship
                 return;
             }
 
-            cmd = _db.CreateCommand($"INSERT INTO game_chat (player_name, message) VALUES (@playerName, @message)");
-            cmd.Parameters.AddWithValue("playerName", playerName);
-            cmd.Parameters.AddWithValue("message", chatMessage);
-            cmd.ExecuteNonQuery();
-
-            cmd = _db.CreateCommand($"SELECT player_name, message FROM game_chat ORDER BY id DESC LIMIT 10");
-            using (var reader = cmd.ExecuteReader())
-            {
-                var responseStream = res.OutputStream;
-                var writer = new StreamWriter(responseStream);
-
-                while (reader.Read())
-                {
-                    string messagePlayerName = reader.GetString(0);
-                    string messageChat = reader.GetString(1);
-                    string colorCode = GetPlayerColor(messagePlayerName);
-                    var line = $"\u001b[{colorCode}m{messagePlayerName}: {messageChat}\u001b[0m"; // ANSI escape codes for colors
-                    writer.WriteLine(line);
-                }
-                reader.Close();
-                writer.Close();
-            }
-
         }
 
-        private string GetPlayerColor(string playerName)
+        private string GetPlayerColor(string playerName, string playerExists)
         {
             if (!_playerColors.ContainsKey(playerName))
             {
@@ -88,7 +93,7 @@ namespace Spaceship
                 if (colorCode == null)
                 {
                     colorCode = GenerateRandomColor();
-                    StoreColorInDatabase(playerName, colorCode);
+                    StoreColorInDatabase(playerName, colorCode, playerExists);
                 }
 
                 _playerColors[playerName] = colorCode;
@@ -108,21 +113,28 @@ namespace Spaceship
             }
         }
 
-        private void StoreColorInDatabase(string playerName, string colorCode)
+        private void StoreColorInDatabase(string playerName, string colorCode, string playerExists)
         {
-            using (var cmd = _db.CreateCommand())
+            var cmd = _db.CreateCommand();
             {
-                cmd.CommandText = "INSERT INTO player_colors (player_name, color_code) VALUES (@playerName, @colorCode)";
-                cmd.Parameters.AddWithValue("playerName", playerName);
-                cmd.Parameters.AddWithValue("colorCode", colorCode);
-                cmd.ExecuteNonQuery();
+                cmd = _db.CreateCommand("SELECT player_name FROM player_colors WHERE player_name = @playerName");
+                cmd.Parameters.AddWithValue("@playerName", playerName);
+                object? playerNameObject = cmd.ExecuteScalar();
+
+                if (playerNameObject != playerExists)
+                {
+                    cmd.CommandText = "INSERT INTO player_colors (player_name, color_code) VALUES (@playerName, @colorCode)";
+                    cmd.Parameters.AddWithValue("playerName", playerName);
+                    cmd.Parameters.AddWithValue("colorCode", colorCode);
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
 
         private string GenerateRandomColor()
         {
             Random rand = new Random();
-            int color = rand.Next(31, 38); // ANSI escape codes for text colors (excluding black)
+            int color = rand.Next(31, 38);
             return color.ToString();
         }
     }

@@ -5,7 +5,6 @@ namespace Spaceship;
 
 public class Router
 {
-
     public void NotFound(HttpListenerResponse res)
     {
         string message = $" 404 - Path not found.";

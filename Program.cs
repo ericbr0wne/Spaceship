@@ -4,7 +4,6 @@ using System.Net;
 using System.Reflection.Metadata;
 using System.Text;
 
-
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=spaceship";
 await using var _db = NpgsqlDataSource.Create(dbUri);
 bool listen = true;
@@ -42,23 +41,22 @@ void HandleRequest(IAsyncResult result)
     }
 }
 
-
-
 void Router(HttpListenerContext context)
 {
-
     User user = new(_db);
     Attack attack = new(_db);
     GamePlay gameplay = new(_db);
     Router router = new();
     Story story = new Story();
     HelpMenu menu = new HelpMenu();
-    Globalchat globalchat = new Globalchat(_db);
+    Globalchat globalchat = new Globalchat(_db); 
+    Leaderboard leaderboard = new(_db);
 
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Console.WriteLine($"{request.HttpMethod} request received");
-    switch (request.HttpMethod, request.Url?.AbsolutePath) // == endpoint
+  
+    switch (request.HttpMethod, request.Url?.AbsolutePath)
     {
         case ("POST", "/chat"):
             globalchat.Chat(request, response);
@@ -72,8 +70,11 @@ void Router(HttpListenerContext context)
         case ("GET", "/mission"):
             story.Mission(response);
             break;
-        case ("POST", $"/createplayer"):
+        case ("POST", "/createplayer"):
             user.CreatePlayer(request, response);
+            break;
+        case ("GET", "/users"):
+            user.Display(response);
             break;
         case ("POST", "/newgame"):
             gameplay.NewGame(request, response);
@@ -83,9 +84,16 @@ void Router(HttpListenerContext context)
             break;
         case ("POST", "/attack"):
             attack.AttackPlayer(request, response);
+            break;           
+        case ("GET", "/hp"):
+            user.getHp(response);
+            break;
+        case ("GET", "/highscore"):
+            leaderboard.Highscore(response);
             break;
         default:
             router.NotFound(response);
             break;
     }
+
 }
